@@ -147,7 +147,7 @@
             dashboardSection.classList.add('hidden');
             addJobSection.classList.add('hidden');
             
-            // අවශ්‍ය කරන කොටස மட்டும் පෙන්වීම
+            // අවශ්‍ය කරන කොටස മാത്രം පෙන්වීම
             document.getElementById(sectionId).classList.remove('hidden');
         }
 
@@ -188,8 +188,8 @@
                 jobMsg.textContent = "Job Registered Successfully!";
                 addJobForm.reset(); // ෆෝම් එක හිස් කිරීම
 
-                // පාරිභෝගිකයාගේ WhatsApp අංකයට ස්වයංක්‍රීයව ලින්ක් එක යැවීම සඳහා WhatsApp API එක සැකසීම
-                let customerMsg = `Hello, your job for ${item} (${model}) has been registered at Meta Electronics. Track status here: http://127.0.0.1:5500/customer.html?phone=${customerPhone}`;
+                // පාරිභෝගිකයාගේ WhatsApp අංකයට ස්වයංක්‍රීයව GitHub Pages ලින්ක් එක යැවීම සඳහා සකස් කිරීම
+                let customerMsg = `Hello, your job for ${item} (${model}) has been registered at Meta Electronics. Track status here: https://roshan-pradeep.github.io/meta_electronics/customer.html?phone=${customerPhone}`;
                 let whatsappUrl = `https://wa.me/94${customerPhone.replace(/^0/, '')}?text=${encodeURIComponent(customerMsg)}`;
                 
                 // තත්පර 1කින් ස්වයංක්‍රීයව WhatsApp වෙත යොමු කිරීම
