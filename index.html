@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Electronics - Admin Login</title>
+    <title>Meta Electronics - Admin Dashboard</title>
     <!-- CSS ස්ටයිල් ෆයිල් එක සම්බන්ධ කිරීම -->
     <link rel="stylesheet" href="style.css">
     <!-- Supabase JavaScript Library එක CDN එක හරහා ඇතුළත් කිරීම -->
@@ -12,101 +12,196 @@
 <body>
 
     <div class="container">
-        <!-- Login වෙන්න අවශ්‍ය කොටස (මුලින්ම පෙන්වයි) -->
+        <!-- 1. Login Section (මුලින්ම ඇමිනිස්ට්‍රේටර්ට ලොග් වීමට පෙන්වන කොටස) -->
         <div id="login-section" class="card">
             <h1>Welcome Meta Electronics</h1>
             <form id="login-form">
-                <!-- දුරකථන අංකය ඇතුළත් කරන කොටස -->
+                <!-- දුරකථන අංකය ඇතුළත් කිරීමේ කොටස -->
                 <div class="form-group">
                     <label for="phone">Phone Number</label>
                     <input type="text" id="phone" placeholder="Enter phone number" required>
                 </div>
-                <!-- මුරපදය ඇතුළත් කරන කොටස -->
+                <!-- මුරපදය ඇතුළත් කිරීමේ කොටස -->
                 <div class="form-group">
                     <label for="password">Password</label>
                     <input type="password" id="password" placeholder="Enter password" required>
                 </div>
-                <!-- Login බටන් එක -->
+                <!-- ලොග් වීමේ බොත්තම -->
                 <button type="submit" class="btn">Login</button>
-                <!-- වැරදුනොත් පෙන්වන දෝෂ පණිවිඩය -->
+                <!-- ලොග් වීම වැරදුනහොත් පෙන්වන දෝෂ පණිවිඩය -->
                 <p id="error-message" class="error-msg"></p>
             </form>
         </div>
 
-        <!-- ඩෑෂ්බෝඩ් එක (සාර්ථකව ලොග් වූ පසු පෙන්වයි, මුලින් සඟවා ඇත) -->
+        <!-- 2. Dashboard Section (සාර්ථකව ලොග් වූ පසු පෙන්වන ප්‍රධාන පිටුව - මුලින් සඟවා ඇත) -->
         <div id="dashboard-section" class="card dashboard-container hidden">
             <div class="dashboard-header">
                 <h2>Meta Electronics Dashboard</h2>
-                <!-- ඉවත් වීමට (Logout) බටන් එක -->
+                <!-- පද්ධතියෙන් ඉවත් වීමට (Logout) ඇති බොත්තම -->
                 <button id="logout-btn" class="btn logout-btn">Logout</button>
             </div>
-            <!-- ඩෑෂ්බෝඩ් එකේ ප්‍රධාන බොත්තම් ටික -->
+            <!-- ඩෑෂ්බෝඩ් එකේ ප්‍රධාන මෙහෙයුම් බොත්තම් ජාලය -->
             <div class="button-grid">
-                <button class="dash-btn" onclick="openPage('add-job')">Add Job</button>
+                <!-- 'Add Job' ක්ලික් කළ විට අදාළ ෆෝම් එක පෙන්වීමට සකසා ඇත -->
+                <button class="dash-btn" onclick="showSection('add-job-section')">Add Job</button>
                 <button class="dash-btn" onclick="openPage('pending-jobs')">Pending Jobs</button>
                 <button class="dash-btn" onclick="openPage('finish-jobs')">Finish Jobs</button>
                 <button class="dash-btn" onclick="openPage('settings')">Settings</button>
             </div>
         </div>
+
+        <!-- 3. Add Job Section (අලුත් ජොබ් එකක් රෙজিস্টර් කිරීමට 'Add Job' ක්ලික් කළ විට පෙන්වයි) -->
+        <div id="add-job-section" class="card hidden" style="text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Register New Job</h2>
+                <!-- නැවත ඩෑෂ්බෝඩ් එකට යාමට 'Back' බොත්තම -->
+                <button type="button" class="btn" style="width: auto; padding: 5px 10px; background-color: #6c757d;" onclick="showSection('dashboard-section')">Back</button>
+            </div>
+            
+            <!-- ජොබ් විස්තර ඇතුළත් කරන පෝරමය -->
+            <form id="add-job-form">
+                <!-- භාණ්ඩයේ නම -->
+                <div class="form-group">
+                    <label for="item">ITEM (භාණ්ඩය)</label>
+                    <input type="text" id="item" placeholder="Ex: TV, Laptop, Sound System" required>
+                </div>
+                <!-- භාණ්ඩයේ මොඩල් එක -->
+                <div class="form-group">
+                    <label for="model">MODEL (මොඩල් එක)</label>
+                    <input type="text" id="model" placeholder="Ex: Samsung 32 inch" required>
+                </div>
+                <!-- සීරියල් අංකය -->
+                <div class="form-group">
+                    <label for="serial_number">Serial Number (සීරියල් අංකය)</label>
+                    <input type="text" id="serial_number" placeholder="Enter serial number" required>
+                </div>
+                <!-- දෝෂය -->
+                <div class="form-group">
+                    <label for="fault">Fault (දෝෂය)</label>
+                    <input type="text" id="fault" placeholder="Ex: No power, Display issue" required>
+                </div>
+                <!-- පාරිභෝගිකයාගේ දුරකථන අංකය -->
+                <div class="form-group">
+                    <label for="customer_phone">Customer Phone Number (පාරිභෝගිකයාගේ අංකය)</label>
+                    <input type="text" id="customer_phone" placeholder="Ex: 0771234567" required>
+                </div>
+                <!-- ජොබ් එක රෙজিস্টර් කිරීමේ බොත්තම -->
+                <button type="submit" class="btn">Register Job</button>
+                <!-- ජොබ් එක සාර්ථකද නැද්ද යන්න පෙන්වන පණිවිඩය -->
+                <p id="job-msg" style="margin-top: 15px; font-weight: bold; text-align: center;"></p>
+            </form>
+        </div>
     </div>
 
     <script>
-        // Supabase Project URL සහ Anon Key නිවැරදිව ඇතුළත් කර ඇත
+        // Supabase සේවාදායකය සඳහා අවශ්‍ය URL සහ Anon Key නිවැරදිව සැකසීම
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
-
-        // දෝෂ මඟහරවා ගැනීම සඳහා 'supabaseClient' ලෙස Supabase Client එක ආරම්භ කිරීම
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // HTML අංග (Elements) JavaScript හරහා පාලනය කිරීමට ලබා ගැනීම
+        // HTML අංග (Elements) JavaScript හරහා පාලනය කිරීමට විචල්‍යයන්ට ලබා ගැනීම
         const loginForm = document.getElementById('login-form');
         const loginSection = document.getElementById('login-section');
         const dashboardSection = document.getElementById('dashboard-section');
+        const addJobSection = document.getElementById('add-job-section');
         const errorMessage = document.getElementById('error-message');
         const logoutBtn = document.getElementById('logout-btn');
+        const addJobForm = document.getElementById('add-job-form');
+        const jobMsg = document.getElementById('job-msg');
 
-        // Login Form එක Submit කරන විට ක්‍රියාත්මක වන කොටස
+        // Admin Login ක්‍රියාවලිය හැසිරවීම
         loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // ෆෝම් එක සාමාන්‍ය ආකාරයට රීලෝඩ් වීම වළකයි
-            
-            // පාරිභෝගිකයා ඇතුළත් කළ දුරකථන අංකය සහ පාස්වර්ඩ් එක ලබා ගැනීම
+            e.preventDefault(); // ෆෝම් එක සාමාන්‍ය ආකාරයට රීලෝඩ් වීම වැළැක්වීම
             const phone = document.getElementById('phone').value;
             const password = document.getElementById('password').value;
+            errorMessage.textContent = ''; // පැරණි දෝෂ පණිවිඩ මකා දැමීම
 
-            // මුලින් තිබූ දෝෂ පණිවිඩ ඉවත් කිරීම
-            errorMessage.textContent = '';
-
-            // දුරකථන අංකය සමඟ '@meta.lk' එකතු කර එය email එකක් ලෙස සකසා ගනියි (උදා: 0771234567@meta.lk)
+            // දුරකථන අංකයට '@meta.lk' එකතු කර එය ඊමේල් එකක් ලෙස සකසා ගැනීම
             const dummyEmail = phone.trim() + "@meta.lk";
-
-            // Supabase Authentication හරහා පරිශීලකයා පරීක්ෂා කිරීම (supabaseClient පාවිච්චි කර ඇත)
             const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: dummyEmail,
                 password: password
             });
 
-            // දෝෂයක් ඇත්නම් (වැරදි නම්)
+            // ලොග් වීම අසාර්ථක නම්
             if (error) {
                 errorMessage.textContent = "Login Failed: Check your Phone Number or Password!";
             } else {
-                // සාර්ථක නම් - Login කොටස සඟවා ඩෑෂ්බෝඩ් එක පෙන්වීම
+                // ලොග් වීම සාර්ථක නම්, Login කොටස සඟවා Dashboard එක පෙන්වීම
                 loginSection.classList.add('hidden');
                 dashboardSection.classList.remove('hidden');
             }
         });
 
-        // Logout බටන් එක ක්ලික් කළ විට ක්‍රියාත්මක වන කොටස
+        // පද්ධතියෙන් ඉවත් වීමේ (Logout) ක්‍රියාවලිය
         logoutBtn.addEventListener('click', async () => {
-            await supabaseClient.auth.signOut(); // Supabase ගිණුමෙන් ඉවත් වීම
-            dashboardSection.classList.add('hidden'); // ඩෑෂ්බෝඩ් එක වැසීම
+            await supabaseClient.auth.signOut(); // Supabase ගිණුමෙන් අයින් වීම
+            dashboardSection.classList.add('hidden');
+            addJobSection.classList.add('hidden');
             loginSection.classList.remove('hidden'); // ලොගින් පේජ් එක පෙන්වීම
-            loginForm.reset(); // ෆෝම් එකේ දත්ත මකා දැමීම
+            loginForm.reset(); // ෆෝම් එක හිස් කිරීම
         });
 
-        // ඩෑෂ්බෝඩ් එකේ බොත්තම් ක්ලික් කළ විට ක්‍රියාත්මක වන කාර්යය
+        // ඩෑෂ්බෝඩ් එක ඇතුළේ විවිධ කොටස් මාරු කර පෙන්වීමේ කාර්යය (Show/Hide කිරීම)
+        function showSection(sectionId) {
+            dashboardSection.classList.add('hidden');
+            addJobSection.classList.add('hidden');
+            
+            // අවශ්‍ය කරන කොටස மட்டும் පෙන්වීම
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        // අලුත් Job එකක් Register Form එක Submit කළ විට ක්‍රියාත්මක වීම
+        addJobForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            jobMsg.textContent = '';
+
+            // ෆෝම් එකෙන් දත්ත ලබා ගැනීම
+            const item = document.getElementById('item').value;
+            const model = document.getElementById('model').value;
+            const serialNumber = document.getElementById('serial_number').value;
+            const fault = document.getElementById('fault').value;
+            const customerPhone = document.getElementById('customer_phone').value;
+
+            // Supabase වල 'jobs' table එකට දත්ත ඇතුළත් කිරීම (Insert කිරීම)
+            const { data, error } = await supabaseClient
+                .from('jobs')
+                .insert([
+                    { 
+                        item: item, 
+                        model: model, 
+                        serial_number: serialNumber, 
+                        fault: fault, 
+                        customer_phone: customerPhone, 
+                        status: 'Pending' // අලුතින් දමන ජොබ් එකක් මූලිකව 'Pending' ලෙස සටහන් වේ
+                    }
+                ]);
+
+            // දෝෂයක් ඇත්නම්
+            if (error) {
+                jobMsg.style.color = 'red';
+                jobMsg.textContent = "Error: Failed to register job!";
+                console.error(error);
+            } else {
+                // සාර්ථක නම්
+                jobMsg.style.color = 'green';
+                jobMsg.textContent = "Job Registered Successfully!";
+                addJobForm.reset(); // ෆෝම් එක හිස් කිරීම
+
+                // පාරිභෝගිකයාගේ WhatsApp අංකයට ස්වයංක්‍රීයව ලින්ක් එක යැවීම සඳහා WhatsApp API එක සැකසීම
+                let customerMsg = `Hello, your job for ${item} (${model}) has been registered at Meta Electronics. Track status here: http://127.0.0.1:5500/customer.html?phone=${customerPhone}`;
+                let whatsappUrl = `https://wa.me/94${customerPhone.replace(/^0/, '')}?text=${encodeURIComponent(customerMsg)}`;
+                
+                // තත්පර 1කින් ස්වයංක්‍රීයව WhatsApp වෙත යොමු කිරීම
+                setTimeout(() => {
+                    window.open(whatsappUrl, '_blank');
+                }, 1000);
+            }
+        });
+
+        // අනෙකුත් පිටු වෙත යාම සඳහා සකස් කළ තාවකාලික කාර්යය
         function openPage(pageName) {
-            alert(pageName + " page will open here!");
-            // ඉදිරියට මෙම බොත්තම් හරහා අදාළ පිටු වෙත යාමට අවශ්‍ය කෝඩ් එක මෙතැනට එකතු කළ හැක.
+            alert(pageName + " page will open soon!");
         }
     </script>
 </body>

@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Electronics - Customer Job Status</title>
+    <!-- CSS ස්ටයිල් ෆයිල් එක සම්බන්ධ කිරීම -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase JavaScript Library එක සම්බන්ධ කිරීම -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 1. Customer Login Section (පාරිභෝගිකයාට දුරකථන අංකය දී ලොග් වීමට) -->
+        <div id="customer-login-section" class="card">
+            <h1>Meta Electronics - Job Tracker</h1>
+            <p style="margin-bottom: 20px; color: #666;">Enter your phone number to check repair status</p>
+            <form id="customer-login-form">
+                <div class="form-group">
+                    <label for="cust-phone">Phone Number</label>
+                    <input type="text" id="cust-phone" placeholder="Ex: 0771234567" required>
+                </div>
+                <button type="submit" class="btn">View My Jobs</button>
+                <p id="cust-error" class="error-msg"></p>
+            </form>
+        </div>
+
+        <!-- 2. Customer Jobs List Section (පාරිභෝගිකයාගේ ජොබ්ස් ලැයිස්තුව පෙන්වන කොටස - මුලින් සඟවා ඇත) -->
+        <div id="customer-jobs-section" class="card hidden" style="text-align: left; max-width: 600px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>My Repair Jobs</h2>
+                <!-- නැවත ලොගින් පිටුවට යාමට බොත්තම -->
+                <button type="button" class="btn" style="width: auto; padding: 5px 10px; background-color: #6c757d;" onclick="location.reload()">Back</button>
+            </div>
+            
+            <!-- අදාළ අංකයට ඇති ජොබ්ස් මෙතැනට ඩයිනමික් ලෙස වැටේ -->
+            <div id="jobs-list-container">
+                <!-- ජොබ් විස්තර කාඩ්පත් මෙහි පෙන්වනු ලැබේ -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Credentials (අපේ ප්‍රොජෙක්ට් එකට අදාළ යතුරු)
+        const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // HTML Elements ලබා ගැනීම
+        const customerLoginForm = document.getElementById('customer-login-form');
+        const customerLoginSection = document.getElementById('customer-login-section');
+        const customerJobsSection = document.getElementById('customer-jobs-section');
+        const custError = document.getElementById('cust-error');
+        const jobsListContainer = document.getElementById('jobs-list-container');
+
+        // පේජ් එක ලෝඩ් වන විට WhatsApp ලින්ක් එකෙන් එන Phone Number එක ස්වයංක්‍රීයව ලබා ගැනීමට (Optional)
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const phoneParam = urlParams.get('phone');
+            if (phoneParam) {
+                document.getElementById('cust-phone').value = phoneParam;
+            }
+        });
+
+        // පාරිභෝගිකයා දුරකථන අංකය දී 'View My Jobs' දුන් විට ක්‍රියාත්මක වීම
+        customerLoginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            custError.textContent = '';
+            const phoneInput = document.getElementById('cust-phone').value.trim();
+
+            // Supabase 'jobs' table එකෙන් මෙම දුරකථන අංකයට අදාළ දත්ත පමණක් ලබා ගැනීම
+            const { data: jobs, error } = await supabaseClient
+                .from('jobs')
+                .select('*')
+                .eq('customer_phone', phoneInput)
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                custError.textContent = "Error fetching jobs. Please try again.";
+                console.error(error);
+                return;
+            }
+
+            // එම අංකයට ජොබ්ස් නොමැති නම්
+            if (jobs.length === 0) {
+                custError.textContent = "No repair jobs found for this phone number!";
+                return;
+            }
+
+            // ලොගින් කොටස සඟවා, ජොබ්ස් ලැයිස්තු කොටස පෙන්වීම
+            customerLoginSection.classList.add('hidden');
+            customerJobsSection.classList.remove('hidden');
+
+            // ලැබුණු ජොබ්ස් එකින් එක HTML වෙත එකතු කිරීම
+            jobsListContainer.innerHTML = '';
+            jobs.forEach(job => {
+                // Status එක අනුව පාට සහ අයිකන් වෙනස් කරගැනීම (Pending නම් රතු, Finished නම් කොළ)
+                let statusBadge = '';
+                if (job.status === 'Pending') {
+                    statusBadge = `<span style="color: red; font-weight: bold;">🔴 Pending</span>`;
+                } else {
+                    statusBadge = `<span style="color: green; font-weight: bold;">🟢 Finished</span>`;
+                }
+
+                // එක් එක් ජොබ් එක සඳහා කාඩ්පතක් සකස් කිරීම
+                const jobCard = document.createElement('div');
+                jobCard.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px;";
+                
+                jobCard.innerHTML = `
+                    <p><strong>Item:</strong> ${job.item}</p>
+                    <p><strong>Model:</strong> ${job.model}</p>
+                    <p><strong>Serial Number:</strong> ${job.serial_number}</p>
+                    <p><strong>Fault:</strong> ${job.fault}</p>
+                    <p><strong>Status:</strong> ${statusBadge}</p>
+                    <p style="font-size: 12px; color: #777;">Registered Date: ${new Date(job.created_at).toLocaleString()}</p>
+                `;
+
+                jobsListContainer.appendChild(jobCard);
+            });
+        });
+    </script>
+</body>
+</html>
