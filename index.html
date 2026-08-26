@@ -44,6 +44,7 @@
             <div class="button-grid">
                 <!-- 'Add Job' ක්ලික් කළ විට අදාළ ෆෝම් එක පෙන්වීමට සකසා ඇත -->
                 <button class="dash-btn" onclick="showSection('add-job-section')">Add Job</button>
+                <!-- Pending Jobs ක්ලික් කළ විට pending-jobs.html ෆයිල් එක විවෘත වන ලෙස සකස් කරන ලදී -->
                 <button class="dash-btn" onclick="openPage('pending-jobs')">Pending Jobs</button>
                 <button class="dash-btn" onclick="openPage('finish-jobs')">Finish Jobs</button>
                 <button class="dash-btn" onclick="openPage('settings')">Settings</button>
@@ -199,9 +200,17 @@
             }
         });
 
-        // අනෙකුත් පිටු වෙත යාම සඳහා සකස් කළ තාවකාලික කාර්යය
+        // පිටු මාරු කිරීම සඳහා සකස් කළ කාර්යය
         function openPage(pageName) {
-            alert(pageName + " page will open soon!");
+            if (pageName === 'pending-jobs') {
+                window.location.href = 'pending-jobs.html'; // Pending Jobs ක්ලික් කළ විට අදාළ පේජ් එකට යයි
+            } else if (pageName === 'finish-jobs') {
+                window.location.href = 'finish-jobs.html'; // Finish Jobs ක්ලික් කළ විට finish-jobs.html පේජ් එකට යයි
+            } else if (pageName === 'settings') {
+                window.location.href = 'settings.html'; // Settings ක්ලික් කළ විට settings.html පේජ් එකට යයි
+            } else {
+                alert(pageName + " page will open soon!");
+            }
         }
     </script>
 </body>
