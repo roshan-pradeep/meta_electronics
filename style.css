@@ -142,3 +142,15 @@ input:focus {
 .hidden {
     display: none !important;
 }
+
+
+/* logo on page*/
+.logo-container {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.site-logo {
+    max-width: 350px; /* ලෝගෝ එකේ සයිස් එක අවශ්‍ය පරිදි අඩු වැඩි කරගන්න පුළුවන් */
+    height: auto;
+    border-radius: 8px;
+}
