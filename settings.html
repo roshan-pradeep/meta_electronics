@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Electronics - Settings</title>
+    <!-- CSS ස්ටයිල් ෆයිල් එක සම්බන්ධ කිරීම -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Supabase JavaScript Library එක CDN එක හරහා ඇතුළත් කිරීම -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* Light / Dark Mode සඳහා අවශ්‍ය මූලික ස්ටයිල්ස් */
+        body.light-mode {
+            background-color: #f4f7f6;
+            color: #333;
+        }
+        body.dark-mode {
+            background-color: #121212;
+            color: #f1f1f1;
+        }
+        body.dark-mode .card, body.dark-mode .container {
+            background-color: #1e1e1e;
+            color: #f1f1f1;
+            border-color: #333;
+        }
+        body.dark-mode input, body.dark-mode select {
+            background-color: #2d2d2d;
+            color: #fff;
+            border: 1px solid #444;
+        }
+    </style>
+</head>
+<body class="light-mode"> <!-- මුලින්ම Light mode එකෙන් පෙන්වයි -->
+
+    <!-- ලෝගෝ එක පෙන්වන කොටස -->
+    <div class="logo-container" style="text-align: center; margin-top: 20px;">
+        <img src="logo.png" alt="Meta Electronics Logo" class="site-logo" style="max-width: 150px; height: auto; border-radius: 8px;">
+    </div>
+
+    <div class="container" style="max-width: 600px; margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Admin Settings</h2>
+            <!-- ඩෑෂ්බෝඩ් එකට යාමට බටන් එක -->
+            <button onclick="openPage('dashboard')" class="btn" style="width: auto; padding: 8px 15px; background-color: #6c757d;">Dashboard</button>
+        </div>
+
+        <!-- 1. Theme Settings කොටස -->
+        <div class="card" style="background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h3>Appearance</h3>
+            <div class="form-group" style="margin-top: 15px;">
+                <label for="theme-selector"><strong>Theme Mode:</strong></label>
+                <select id="theme-selector" onchange="changeTheme(this.value)" style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px;">
+                    <option value="light">Light Mode</option>
+                    <option value="dark">Dark Mode</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- 2. Change Phone Number කොටස -->
+        <div class="card" style="background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h3>Change Phone Number</h3>
+            <form id="change-phone-form" style="margin-top: 15px;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="new-phone">New Phone Number</label>
+                    <input type="text" id="new-phone" placeholder="Enter new phone number (Ex: 0711462838)" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px;">
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Update Phone Number & Save</button>
+                <p id="phone-msg" style="margin-top: 10px; font-weight: bold; text-align: center;"></p>
+            </form>
+        </div>
+
+        <!-- 3. Change Password කොටස -->
+        <div class="card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+            <h3>Change Password</h3>
+            <form id="change-password-form" style="margin-top: 15px;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label for="new-password">New Password</label>
+                    <input type="password" id="new-password" placeholder="Enter new password" required style="width: 100%; padding: 10px; margin-top: 5px; border-radius: 5px;">
+                </div>
+                <button type="submit" class="btn" style="width: 100%;">Update Password</button>
+                <p id="password-msg" style="margin-top: 10px; font-weight: bold; text-align: center;"></p>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Supabase Credentials
+        const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // පේජ් එක ලෝඩ් වන විට සේව් කරගත් Theme එක ලබා ගැනීම
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('meta_theme') || 'light';
+            document.body.className = savedTheme + '-mode';
+            document.getElementById('theme-selector').value = savedTheme;
+        });
+
+        // Theme එක මාරු කර LocalStorage හි රඳවා ගැනීම
+        function changeTheme(theme) {
+            document.body.className = theme + '-mode';
+            localStorage.setItem('meta_theme', theme);
+        }
+
+        // ඩෑෂ්බෝඩ් එකට හෝ වෙනත් පේජ්වලට යාමට
+        function openPage(pageName) {
+            if (pageName === 'dashboard') {
+                window.location.href = 'index.html';
+            }
+        }
+
+        // 1. Change Phone Number Form එක Submit කිරීම (නව අංකයට @meta.lk එකතු කර ඊමේල් ලෙස යාවත්කාලීන කිරීම)
+        const changePhoneForm = document.getElementById('change-phone-form');
+        const phoneMsg = document.getElementById('phone-msg');
+
+        changePhoneForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            phoneMsg.textContent = '';
+
+            const newPhoneInput = document.getElementById('new-phone').value.trim();
+            const { data: { user } } = await supabaseClient.auth.getUser();
+
+            if (!user) {
+                phoneMsg.style.color = 'red';
+                phoneMsg.textContent = "Error: Please login first!";
+                return;
+            }
+
+            // ඔයා ඉල්ලපු අංකය හෝ අලුතින් දෙන අංකය @meta.lk සමඟ සම්බන්ධ කර ඊමේල් එක සෑදීම
+            const updatedEmail = newPhoneInput + "@meta.lk";
+
+            // Supabase හි auth යූසර්ගේ ඊමේල් එක (අංකය) වෙනස් කිරීම
+            const { error } = await supabaseClient.auth.updateUser({
+                email: updatedEmail 
+            });
+
+            if (error) {
+                phoneMsg.style.color = 'red';
+                phoneMsg.textContent = "Error: " + error.message;
+            } else {
+                phoneMsg.style.color = 'green';
+                phoneMsg.textContent = "Phone number/email successfully updated! Please log in again with your new number.";
+            }
+        });
+
+        // 2. Change Password Form එක Submit කිරීම
+        const changePasswordForm = document.getElementById('change-password-form');
+        const passwordMsg = document.getElementById('password-msg');
+
+        changePasswordForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            passwordMsg.textContent = '';
+
+            const newPassword = document.getElementById('new-password').value;
+            const { data: { user } } = await supabaseClient.auth.getUser();
+
+            if (!user) {
+                passwordMsg.style.color = 'red';
+                passwordMsg.textContent = "Error: Please login first!";
+                return;
+            }
+
+            // ලොග් වී ඇති යූසර්ගේ පාස්වර්ඩ් එක වෙනස් කිරීම
+            const { error } = await supabaseClient.auth.updateUser({
+                password: newPassword
+            });
+
+            if (error) {
+                passwordMsg.style.color = 'red';
+                passwordMsg.textContent = "Error: " + error.message;
+            } else {
+                passwordMsg.style.color = 'green';
+                passwordMsg.textContent = "Password updated successfully!";
+            }
+        });
+    </script>
+</body>
+</html>
