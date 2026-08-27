@@ -18,9 +18,14 @@
             <a href="index.html" class="btn" style="width: auto; padding: 8px 15px; text-decoration: none; background-color: #6c757d; text-align: center;">Dashboard</a>
         </div>
 
+        <!-- දුරකථන අංක අනුව ෆිල්ටර් කිරීමට බොත්තම් වැටෙන කොටස -->
+        <div id="phone-filter-container" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 8px;">
+            <!-- අංක අනුව බොත්තම් මෙතැනට ජනාවෙයි -->
+        </div>
+
         <!-- Finished Jobs ලැයිස්තුව වැටෙන කන්ටේනර් එක -->
         <div id="finish-jobs-container">
-            <p style="text-align: center; color: #666;">Loading finished jobs...</p>
+            <p style="text-align: center; color: #666; font-weight: bold; background: #fff; padding: 20px; border: 1px dashed #ccc; border-radius: 8px;">👈 Please click a phone number button above to view finished jobs.</p>
         </div>
     </div>
 
@@ -42,12 +47,15 @@
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const finishJobsContainer = document.getElementById('finish-jobs-container');
+        const phoneFilterContainer = document.getElementById('phone-filter-container');
+
+        let allFinishJobs = []; // සියලුම ෆිනිශ් වුණු ජොබ්ස් ගබඩා කරගැනීමට
 
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchFinishJobs();
         });
 
-        // ඩේටාබේස් එකෙන් Status එක 'Finished' වුණු ජොබ්ස් පමණක් ලබා ගැනීම
+        // ඩේටාබේස් එකෙන් Status එක 'Finished' වුණු ජොබ්ස් සියල්ල ලබා ගැනීම සහ ෆිල්ටර් බොත්තම් සෑදීම
         async function fetchFinishJobs() {
             const { data: jobs, error } = await supabaseClient
                 .from('jobs')
@@ -62,7 +70,53 @@
             }
 
             if (jobs.length === 0) {
+                // මෙන්න මෙතන තිබුණු වැරැද්ද (පරණ කෝඩ් එකේ " වෙනුවට වැරදි සලකුණක් තිබුණා)
                 finishJobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No finished jobs found.</p>`;
+                phoneFilterContainer.innerHTML = '';
+                return;
+            }
+
+            allFinishJobs = jobs; // ඩේටා ගබඩා කරගැනීම
+            createPhoneFilterButtons(allFinishJobs);
+            
+            // මුලින්ම ජොබ්ස් ඔක්කොම නොපෙන්වා, ෆෝන් අංකයක් තෝරන්න කියන පණිවිඩය පෙන්වීම
+            finishJobsContainer.innerHTML = `<p style="text-align: center; color: #666; font-weight: bold; background: #fff; padding: 20px; border: 1px dashed #ccc; border-radius: 8px;">👈 Please click a phone number button above to view finished jobs.</p>`;
+        }
+
+        // දුරකථන අංක සඳහා ඉහළින් බොත්තම් සෑදීම
+        function createPhoneFilterButtons(jobs) {
+            phoneFilterContainer.innerHTML = '';
+
+            // අද්විතීය දුරකථන අංක (Unique Phone Numbers) පමණක් ලබා ගැනීම
+            const uniquePhones = [...new Set(jobs.map(job => job.customer_phone))];
+
+            // "All Finished Jobs" පෙන්වන මූලික බොත්තම
+            const allBtn = document.createElement('button');
+            allBtn.textContent = "All Finished Jobs";
+            allBtn.style.cssText = "background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;";
+            allBtn.onclick = () => displayJobs(allFinishJobs);
+            phoneFilterContainer.appendChild(allBtn);
+
+            // එක් එක් දුරකථන අංකයට වෙනම බොත්තමක් සෑදීම
+            uniquePhones.forEach(phone => {
+                const phoneBtn = document.createElement('button');
+                phoneBtn.innerHTML = `📞 ${phone}`;
+                phoneBtn.style.cssText = "background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;";
+                
+                // බොත්තම ක්ලික් කළ විට අදාළ අංකයේ ෆිනිශ් වුණු ජොබ්ස් පමණක් ෆිල්ටර් කර පෙන්වීම
+                phoneBtn.onclick = () => {
+                    const filteredJobs = allFinishJobs.filter(job => job.customer_phone === phone);
+                    displayJobs(filteredJobs);
+                };
+
+                phoneFilterContainer.appendChild(phoneBtn);
+            });
+        }
+
+        // ෆිල්ටර් කළ finished ජොබ්ස් කාඩ්පත් ස්ක්‍රීන් එකේ පෙන්වීම සඳහා වන ෆන්ක්ෂන් එක
+        function displayJobs(jobs) {
+            if (jobs.length === 0) {
+                finishJobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No finished jobs match this filter.</p>`;
                 return;
             }
 
@@ -88,6 +142,7 @@
                     <p><strong>Repair Charges:</strong> Rs. ${job.repair_charges || 0}</p>
                     <p><strong>Description / Parts:</strong> ${job.description || 'N/A'}</p>
                     
+                    <!-- රෙපයාර් කළ පසු ඇතුළත් කළ ෆොටෝ එක තිබේ නම් පෙන්වීම -->
                     ${job.photo_url ? `<p><strong>Repair Photo:</strong><br><img src="${job.photo_url}" alt="Repair Photo" style="max-width: 200px; height: auto; margin-top: 5px; border-radius: 4px; border: 1px solid #ccc;"></p>` : ''}
                     
                     <p style="font-size: 12px; color: #777; margin-top: 10px;">Registered Date: ${new Date(job.created_at).toLocaleString()}</p>
@@ -98,7 +153,7 @@
             });
         }
 
-        // දුරකථන අංකය ක්ලික් කළ විට එම අංකයට අදාළ සියලුම ජොබ්ස් පෙන්වීමේ פונקציה එක
+        // දුරකථන අංකය ක්ලික් කළ විට එම අංකයට අදාළ සියලුම ජොබ්ස් මෝඩල් එකේ පෙන්වීම
         async function viewCustomerJobs(phone) {
             const modal = document.getElementById('customer-jobs-modal');
             const modalTitle = document.getElementById('modal-title');

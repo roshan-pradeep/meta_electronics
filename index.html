@@ -110,6 +110,16 @@
         const addJobForm = document.getElementById('add-job-form');
         const jobMsg = document.getElementById('job-msg');
 
+        // පේජ් එක ලෝඩ් වන විට පරිශීලකයා දැනටමත් ලොග් වී ඇත්දැයි පරීක්ෂා කිරීම (Session Check)
+        window.addEventListener('DOMContentLoaded', async () => {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                // පරිශීලකයා ලොග් වී ඇත්නම් ලොගින් පේජ් එක සඟවා ඩෑෂ්බෝඩ් එක පෙන්වීම
+                loginSection.classList.add('hidden');
+                dashboardSection.classList.remove('hidden');
+            }
+        });
+
         // Admin Login ක්‍රියාවලිය හැසිරවීම
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault(); // ෆෝම් එක සාමාන්‍ය ආකාරයට රීලෝඩ් වීම වැළැක්වීම
@@ -200,14 +210,16 @@
             }
         });
 
-        // පිටු මාරු කිරීම සඳහා සකස් කළ කාර්යය
+        // පිටු මාරු කිරීම සඳහා සකස් කළ කාර්යය (Pending, Finish, Settings වෙත යාමට සහ ඩෑෂ්බෝඩ් එකෙන් අනෙක් පේජ්වලට යාමට)
         function openPage(pageName) {
             if (pageName === 'pending-jobs') {
-                window.location.href = 'pending-jobs.html'; // Pending Jobs ක්ලික් කළ විට අදාළ පේජ් එකට යයි
+                window.location.href = 'pending-jobs.html'; // Pending Jobs පේජ් එකට යාමට
             } else if (pageName === 'finish-jobs') {
-                window.location.href = 'finish-jobs.html'; // Finish Jobs ක්ලික් කළ විට finish-jobs.html පේජ් එකට යයි
+                window.location.href = 'finish-jobs.html'; // Finish Jobs පේජ් එකට යාමට
             } else if (pageName === 'settings') {
-                window.location.href = 'settings.html'; // Settings ක්ලික් කළ විට settings.html පේජ් එකට යයි
+                window.location.href = 'settings.html'; // Settings පේජ් එකට යාමට
+            } else if (pageName === 'dashboard') {
+                window.location.href = 'index.html'; // වෙනත් පේජ්වල සිට ප්‍රධාන ඩෑෂ්බෝඩ් එකට (index.html වෙත) පැමිණීමට
             } else {
                 alert(pageName + " page will open soon!");
             }
