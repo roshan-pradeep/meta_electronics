@@ -8,12 +8,8 @@
     <link rel="stylesheet" href="style.css">
     <!-- Supabase JavaScript Library එක CDN එක හරහා ඇතුළත් කිරීම -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-   
 </head>
 <body>
-
-    
 
     <div class="container">
         <!-- 1. Login Section (මුලින්ම ඇමිනිස්ට්‍රේටර්ට ලොග් වීමට පෙන්වන කොටස) -->
@@ -124,28 +120,42 @@
             }
         });
 
-        // Admin Login ක්‍රියාවලිය හැසිරවීම
+        // Admin Login ක්‍රියාවලිය හැසිරවීම (ස්‍ථිර ඊමේල් එකක් හරහා ලොග් වී, දුරකථන අංකය profiles ටේබල් එකෙන් පරීක්ෂා කිරීම)
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault(); // ෆෝම් එක සාමාන්‍ය ආකාරයට රීලෝඩ් වීම වැළැක්වීම
-            const phone = document.getElementById('phone').value;
+            const phoneInput = document.getElementById('phone').value.trim();
             const password = document.getElementById('password').value;
             errorMessage.textContent = ''; // පැරණි දෝෂ පණිවිඩ මකා දැමීම
 
-            // දුරකථන අංකයට '@meta.lk' එකතු කර එය ඊමේල් එකක් ලෙස සකසා ගැනීම
-            const dummyEmail = phone.trim() + "@meta.lk";
-            const { data, error } = await supabaseClient.auth.signInWithPassword({
-                email: dummyEmail,
+            // 1. මුලින්ම පද්ධතියේ ප්‍රධාන ස්ථිර ඊමේල් එක භාවිතයෙන් Supabase Auth හරහා ලොග් වීම (Admin එකවුන්ට් එක සඳහා)
+            const adminEmail = "admin@meta.lk"; 
+            const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
+                email: adminEmail,
                 password: password
             });
 
-            // ලොග් වීම අසාර්ථක නම්
-            if (error) {
-                errorMessage.textContent = "Login Failed: Check your Phone Number or Password!";
-            } else {
-                // ලොග් වීම සාර්ථක නම්, Login කොටස සඟවා Dashboard එක පෙන්වීම
-                loginSection.classList.add('hidden');
-                dashboardSection.classList.remove('hidden');
+            if (authError) {
+                errorMessage.textContent = "Login Failed: Check your Password!";
+                return;
             }
+
+            // 2. ලොග් වූ යූසර්ගේ ID එකට අදාළ දුරකථන අංකය පමණක් profiles ටේබල් එකෙන් ලබා ගැනීම (Multiple rows ගැටළුව මඟහරවා ගැනීමට .eq පාවිච්චි කර ඇත)
+            const { data: profileData, error: profileError } = await supabaseClient
+                .from('profiles')
+                .select('phone')
+                .eq('id', authData.user.id)
+                .single();
+
+            // ටේබල් එකේ අංකයක් නැත්නම් හෝ ඇතුළත් කළ අංකය ටේබල් එකේ ඇති අංකයට සමාන නැත්නම්
+            if (profileError || !profileData || profileData.phone !== phoneInput) {
+                errorMessage.textContent = "Login Failed: Incorrect Phone Number!";
+                await supabaseClient.auth.signOut(); // වැරදි නම් ලොග් වීම අත්හිටුවා නැවත ලොග්අවුට් කිරීම
+                return;
+            }
+
+            // සියල්ල සාර්ථක නම් ඩෑෂ්බෝඩ් එක පෙන්වීම
+            loginSection.classList.add('hidden');
+            dashboardSection.classList.remove('hidden');
         });
 
         // පද්ධතියෙන් ඉවත් වීමේ (Logout) ක්‍රියාවලිය
@@ -176,9 +186,9 @@
             const model = document.getElementById('model').value;
             const serialNumber = document.getElementById('serial_number').value;
             const fault = document.getElementById('fault').value;
-            const customerPhone = document.getElementById('customer_phone').value;
+            const customerPhone = document.getElementById('customer_phone').value.trim();
 
-            // Supabase වල 'jobs' table එකට දත්ත ඇතුළත් කිරීම (Insert කිරීම)
+            // jobs ටේබල් එකට දත්ත ඇතුළත් කිරීම
             const { data, error } = await supabaseClient
                 .from('jobs')
                 .insert([

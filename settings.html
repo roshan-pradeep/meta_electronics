@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meta Electronics - Settings</title>
-    <!-- CSS ස්ටයිල් ෆයිල් එක සම්බන්ධ කිරීම -->
+    <!-- CSS ස්ටයිල් ෆයිල් එක සහ Supabase ස්ක්‍රිප්ට් එක සම්බන්ධ කිරීම -->
     <link rel="stylesheet" href="style.css">
-    <!-- Supabase JavaScript Library එක CDN එක හරහා ඇතුළත් කිරීම -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         body.light-mode { background-color: #f4f7f6; color: #333; }
@@ -17,15 +16,19 @@
 </head>
 <body class="light-mode">
 
-    
+    <!-- ලාංඡනය පෙන්වන කොටස -->
+    <div class="logo-container" style="text-align: center; margin-top: 20px;">
+        <img src="logo.png" alt="Meta Electronics Logo" class="site-logo" style="max-width: 150px; height: auto; border-radius: 8px;">
+    </div>
 
     <div class="container" style="max-width: 600px; margin-top: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Client Settings</h2>
+            <!-- ඩෑෂ්බෝඩ් එකට නැවත යාමට ඇති බොත්තම -->
             <button onclick="openPage('dashboard')" class="btn" style="width: auto; padding: 8px 15px; background-color: #6c757d;">Dashboard</button>
         </div>
 
-        <!-- 1. Theme Settings -->
+        <!-- 1. Theme Settings (පිටුවේ පෙනුම වෙනස් කිරීම - Light/Dark Mode) -->
         <div class="card" style="background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
             <h3>Appearance</h3>
             <div class="form-group" style="margin-top: 15px;">
@@ -37,7 +40,7 @@
             </div>
         </div>
 
-        <!-- 2. Change Phone Number කොටස -->
+        <!-- 2. Change Phone Number කොටස (profiles ටේබල් එක පමණක් අප්ඩේට් කිරීම) -->
         <div class="card" style="background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
             <h3>Change Phone Number</h3>
             <form id="change-phone-form" style="margin-top: 15px;">
@@ -50,7 +53,7 @@
             </form>
         </div>
 
-        <!-- 3. Change Password කොටස -->
+        <!-- 3. Change Password කොටස (මුරපදය වෙනස් කිරීම) -->
         <div class="card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
             <h3>Change Password</h3>
             <form id="change-password-form" style="margin-top: 15px;">
@@ -65,28 +68,32 @@
     </div>
 
     <script>
+        // Supabase සේවාදායකය සඳහා අවශ්‍ය URL සහ Anon Key සැකසීම
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // පේජ් එක ලෝඩ් වන විට සේව් කර ඇති තේම් එක (Theme) ලබාගෙන සැකසීම
         window.addEventListener('DOMContentLoaded', () => {
             const savedTheme = localStorage.getItem('meta_theme') || 'light';
             document.body.className = savedTheme + '-mode';
             document.getElementById('theme-selector').value = savedTheme;
         });
 
+        // තේම් එක වෙනස් කර LocalStorage හි සුරැකීම
         function changeTheme(theme) {
             document.body.className = theme + '-mode';
             localStorage.setItem('meta_theme', theme);
         }
 
+        // පිටු අතර මාරුවීම (ඩෑෂ්බෝඩ් එකට යාමට)
         function openPage(pageName) {
             if (pageName === 'dashboard') {
                 window.location.href = 'index.html';
             }
         }
 
-        // 1. Phone Number වෙනස් කිරීම
+        // 1. Phone Number වෙනස් කිරීම (profiles ටේබල් එක පමණක් upsert කිරීම මඟින්)
         const changePhoneForm = document.getElementById('change-phone-form');
         const phoneMsg = document.getElementById('phone-msg');
 
@@ -95,34 +102,38 @@
             phoneMsg.textContent = '';
 
             const newPhoneInput = document.getElementById('new-phone').value.trim();
-            const updatedEmail = newPhoneInput + "@meta.lk";
 
+            // වත්මන් ලොග් වී සිටින යූසර්ගේ විස්තර ලබා ගැනීම
             const { data: { user } } = await supabaseClient.auth.getUser();
+
             if (!user) {
                 phoneMsg.style.color = 'red';
                 phoneMsg.textContent = "Error: Please login first!";
                 return;
             }
 
-            const { error } = await supabaseClient.auth.updateUser({
-                email: updatedEmail
-            });
+            // profiles ටේබල් එකේ අදාළ යූසර්ගේ අයිඩී (id) එකට අදාළ ෆෝන් නම්බර් එක අප්ඩේට් කිරීම හෝ අලුතින් ඇතුළත් කිරීම (upsert)
+            const { error: profileError } = await supabaseClient
+                .from('profiles')
+                .upsert({ id: user.id, phone: newPhoneInput });
 
-            if (error) {
+            if (profileError) {
                 phoneMsg.style.color = 'red';
-                phoneMsg.textContent = "Error: " + error.message;
+                phoneMsg.textContent = "Error: " + profileError.message;
             } else {
                 phoneMsg.style.color = 'green';
-                phoneMsg.textContent = "Phone number updated successfully! Please log in again.";
+                phoneMsg.textContent = "Phone number updated successfully in database! Logging out in 2 seconds...";
                 changePhoneForm.reset();
-                setTimeout(() => {
-                    supabaseClient.auth.signOut();
+                
+                // අලුත් දුරකථන අංකයෙන් නැවත ලොග් වීම සඳහා තත්පර 2කින් ඔටෝ ලොග్‌අවුට් කර ලොගින් පේජ් එකට (index.html) යැවීම
+                setTimeout(async () => {
+                    await supabaseClient.auth.signOut();
                     window.location.href = 'index.html';
-                }, 2500);
+                }, 2000);
             }
         });
 
-        // 2. Password වෙනස් කිරීම
+        // 2. Password වෙනස් කිරීම (Supabase Auth හරහා මුරපදය පමණක් වෙනස් කිරීම)
         const changePasswordForm = document.getElementById('change-password-form');
         const passwordMsg = document.getElementById('password-msg');
 
@@ -139,6 +150,7 @@
                 return;
             }
 
+            // Supabase Auth එකේ පාස්වර්ඩ් එක පමණක් වෙනස් කිරීම
             const { error } = await supabaseClient.auth.updateUser({
                 password: newPassword
             });
@@ -149,7 +161,7 @@
             } else {
                 passwordMsg.style.color = 'green';
                 passwordMsg.textContent = "Password updated successfully!";
-                changePasswordForm.reset(); // මෙතන තිබුණු වැරුද්ද නිවැරදි කර ඇත
+                changePasswordForm.reset();
             }
         });
     </script>
