@@ -14,7 +14,13 @@
     <div class="container">
         <!-- 1. Login Section (මුලින්ම ඇමිනිස්ට්‍රේටර්ට ලොග් වීමට පෙන්වන කොටස) -->
         <div id="login-section" class="card">
-            <h1>Welcome Meta Electronics</h1>
+            
+            <!-- ලාංඡනය සහ මාතෘකාව එක පෙළට පෙන්වන කොටස -->
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+                <img src="logo.png" alt="Meta Electronics Logo" style="width: 100px; height: 100px; border-radius: 50%; object-fit: cover;">
+                <h1 style="margin: 0; font-size: 22px;">Welcome Meta Electronics</h1>
+            </div>
+
             <form id="login-form">
                 <!-- දුරකථන අංකය ඇතුළත් කිරීමේ කොටස -->
                 <div class="form-group">
@@ -35,11 +41,21 @@
 
         <!-- 2. Dashboard Section (සාර්ථකව ලොග් වූ පසු පෙන්වන ප්‍රධාන පිටුව - මුලින් සඟවා ඇත) -->
         <div id="dashboard-section" class="card dashboard-container hidden">
-            <div class="dashboard-header">
-                <h2>Meta Electronics Dashboard</h2>
+            <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                
+                <!-- ඩෑෂ්බෝඩ් එකේ වම් පැත්තෙන් ලාංඡනය සහ නම පෙන්වීම -->
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="logo.png" alt="Meta Electronics Logo" style="width: 75px; height: 75px; border-radius: 50%; object-fit: cover;">
+                    <div>
+                        <h3 style="margin: 0; font-size: 18px;">Meta Electronics</h3>
+                        <span style="font-size: 13px; color: #666;">Dashboard</span>
+                    </div>
+                </div>
+
                 <!-- පද්ධතියෙන් ඉවත් වීමට (Logout) ඇති බොත්තම -->
-                <button id="logout-btn" class="btn logout-btn">Logout</button>
+                <button id="logout-btn" class="btn logout-btn" style="width: auto; padding: 6px 12px;">Logout</button>
             </div>
+
             <!-- ඩෑෂ්බෝඩ් එකේ ප්‍රධාන මෙහෙයුම් බොත්තම් ජාලය -->
             <div class="button-grid">
                 <!-- 'Add Job' ක්ලික් කළ විට අදාළ ෆෝම් එක පෙන්වීමට සකසා ඇත -->

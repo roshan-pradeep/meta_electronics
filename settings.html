@@ -16,10 +16,7 @@
 </head>
 <body class="light-mode">
 
-    <!-- ලාංඡනය පෙන්වන කොටස -->
-    <div class="logo-container" style="text-align: center; margin-top: 20px;">
-        <img src="logo.png" alt="Meta Electronics Logo" class="site-logo" style="max-width: 150px; height: auto; border-radius: 8px;">
-    </div>
+   
 
     <div class="container" style="max-width: 600px; margin-top: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -93,7 +90,7 @@
             }
         }
 
-        // 1. Phone Number වෙනස් කිරීම (profiles ටේබල් එක පමණක් upsert කිරීම මඟින්)
+        // 1. Phone Number වෙනස් කිරීම (profiles ටේබල් එක RLS policies වලට යටත්ව upsert කිරීම)
         const changePhoneForm = document.getElementById('change-phone-form');
         const phoneMsg = document.getElementById('phone-msg');
 
@@ -112,7 +109,7 @@
                 return;
             }
 
-            // profiles ටේබල් එකේ අදාළ යූසර්ගේ අයිඩී (id) එකට අදාළ ෆෝන් නම්බර් එක අප්ඩේට් කිරීම හෝ අලුතින් ඇතුළත් කිරීම (upsert)
+            // profiles ටේබල් එකේ අදාළ යූසර්ගේ අයිඩී (id) එකට අදාළ ෆෝන් නම්බර් එක අප්ඩේට් කිරීම (RLS authenticated policy මඟින් ආරක්ෂා කර ඇත)
             const { error: profileError } = await supabaseClient
                 .from('profiles')
                 .upsert({ id: user.id, phone: newPhoneInput });
@@ -125,7 +122,7 @@
                 phoneMsg.textContent = "Phone number updated successfully in database! Logging out in 2 seconds...";
                 changePhoneForm.reset();
                 
-                // අලුත් දුරකථන අංකයෙන් නැවත ලොග් වීම සඳහා තත්පර 2කින් ඔටෝ ලොග్‌අවුට් කර ලොගින් පේජ් එකට (index.html) යැවීම
+                // යාවත්කාලීන කිරීමෙන් පසු තත්පර 2කින් ඔටෝ ලොග్‌අවුට් කර ලොගින් පේජ් එකට (index.html) යැවීම
                 setTimeout(async () => {
                     await supabaseClient.auth.signOut();
                     window.location.href = 'index.html';
@@ -133,7 +130,7 @@
             }
         });
 
-        // 2. Password වෙනස් කිරීම (Supabase Auth හරහා මුරපදය පමණක් වෙනස් කිරීම)
+        // 2. Password වෙනස් කිරීම (Supabase Auth හරහා මුරපදය අප්ඩේට් කිරීම)
         const changePasswordForm = document.getElementById('change-password-form');
         const passwordMsg = document.getElementById('password-msg');
 
@@ -141,27 +138,26 @@
             e.preventDefault();
             passwordMsg.textContent = '';
 
-            const newPassword = document.getElementById('new-password').value;
-            const { data: { user } } = await supabaseClient.auth.getUser();
+            const newPasswordInput = document.getElementById('new-password').value.trim();
 
-            if (!user) {
-                passwordMsg.style.color = 'red';
-                passwordMsg.textContent = "Error: Please login first!";
-                return;
-            }
-
-            // Supabase Auth එකේ පාස්වර්ඩ් එක පමණක් වෙනස් කිරීම
-            const { error } = await supabaseClient.auth.updateUser({
-                password: newPassword
+            // ලොග් වී සිටින යූසර්ගේ පාස්වර්ඩ් එක Supabase Auth updateUser මඟින් වෙනස් කිරීම
+            const { error: passwordError } = await supabaseClient.auth.updateUser({
+                password: newPasswordInput
             });
 
-            if (error) {
+            if (passwordError) {
                 passwordMsg.style.color = 'red';
-                passwordMsg.textContent = "Error: " + error.message;
+                passwordMsg.textContent = "Error: " + passwordError.message;
             } else {
                 passwordMsg.style.color = 'green';
-                passwordMsg.textContent = "Password updated successfully!";
+                passwordMsg.textContent = "Password updated successfully! Please login again with your new password in 2 seconds...";
                 changePasswordForm.reset();
+
+                // පාස්වර්ඩ් එක වෙනස් වූ පසු ආරක්ෂාව සඳහා ලොග్‌අවුට් කර නැවත ලොගින් පේජ් එකට යැවීම
+                setTimeout(async () => {
+                    await supabaseClient.auth.signOut();
+                    window.location.href = 'index.html';
+                }, 2000);
             }
         });
     </script>

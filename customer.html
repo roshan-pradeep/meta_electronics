@@ -4,67 +4,91 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meta Electronics - Job Status</title>
-    <!-- CSS ස්ටයිල් ෆයිල් එක සම්බන්ධ කිරීම -->
+    <!-- CSS ස්ටයිල් ෆයිල් එක සහ Supabase ස්ක්‍රිප්ට් එක සම්බන්ධ කිරීම -->
     <link rel="stylesheet" href="style.css">
-    <!-- Supabase JavaScript Library එක CDN එක හරහා ඇතුළත් කිරීම -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        /* ලයිට් සහ ඩාרק තේම් සඳහා වන වර්ණ සැකසුම් */
+        body.light-mode { background-color: #f4f7f6; color: #333; }
+        body.dark-mode { background-color: #121212; color: #f1f1f1; }
+        body.dark-mode .card, body.dark-mode .container, body.dark-mode div[style*="background"] { background-color: #1e1e1e !important; color: #f1f1f1 !important; border-color: #333 !important; }
+    </style>
 </head>
-<body>
+<body class="light-mode">
 
-     
+    <!-- ලාංඡනය (Logo) පෙන්වන කොටස - පිටුවේ ඉහළ මධ්‍යයේ (Center) පෙන්වීමට සකසා ඇත -->
+    <div class="logo-container" style="text-align: center; margin-top: 20px;">
+        <img src="logo.png" alt="Meta Electronics Logo" class="site-logo" style="max-width: 150px; height: auto; border-radius: 8px;">
+    </div>
 
-    <div class="container" style="max-width: 600px; text-align: left;">
-        <h2 style="text-align: center; margin-bottom: 20px;">Meta Electronics - Job Status</h2>
+    <!-- ප්‍රධාන අන්තර්ගතය අඩංගු කන්ටේනරය -->
+    <div class="container" style="max-width: 600px; margin-top: 20px; text-align: left;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Job Status</h2>
+            <!-- මුල් පිටුවට (Login/Home) නැවත යාමට ඇති බොත්තම -->
+            <button onclick="window.location.href='index.html'" class="btn" style="width: auto; padding: 8px 15px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Home</button>
+        </div>
         
-        <!-- පාරිභෝගිකයාගේ ජොබ් විස්තර පෙන්වන තැන -->
+        <!-- පාරිභෝගිකයාගේ ජොබ් විස්තර ඩේටාබේස් එකෙන් ගෙනවිਤ පෙන්වන තැන -->
         <div id="customer-job-container">
             <p style="text-align: center; color: #666;">Loading job details...</p>
         </div>
     </div>
 
     <script>
-        // Supabase Credentials
+        // Supabase සේවාදායකය සඳහා අවශ්‍ය URL සහ Anon Key සැකසීම (RLS public select policy සමඟ ක්‍රියා කරයි)
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // HTML හි ජොබ් විස්තර පෙන්වන ප්‍රධාන ඩිව් එක ලබා ගැනීම
         const customerJobContainer = document.getElementById('customer-job-container');
 
-        // URL එකේ තියෙන phone number එක ලබා ගැනීම (Ex: customer.html?phone=0771234567)
-        const urlParams = new URLSearchParams(window.location.search);
-        const customerPhone = urlParams.get('phone');
-
+        // පේජ් එක ලෝඩ් වන විට ක්‍රියාත්මක වන ප්‍රධාන කොටස
         window.addEventListener('DOMContentLoaded', async () => {
+            // වෙනත් පිටුවල සේව් කර ඇති තේම් එක (Theme) ලබාගෙන පිටුවට ඇතුළත් කිරීම
+            const savedTheme = localStorage.getItem('meta_theme') || 'light';
+            document.body.className = savedTheme + '-mode';
+
+            // URL එකේ සඳහන් කර ඇති පාරිභෝගික දුරකථන අංකය ලබා ගැනීම (Ex: customer.html?phone=0771234567)
+            const urlParams = new URLSearchParams(window.location.search);
+            const customerPhone = urlParams.get('phone');
+
+            // දුරකථන අංකයක් URL එකේ නොමැති නම් දෝෂ පණිවිඩයක් පෙන්වීම
             if (!customerPhone) {
                 customerJobContainer.innerHTML = `<p style="color: red; text-align: center;">Customer phone number not found in URL!</p>`;
                 return;
             }
 
-            // Supabase එකෙන් අදාළ දුරකථන අංකයට අයිති ජොබ් විස්තර ලබා ගැනීම
+            // Supabase ඩේටාබේස් එකෙන් අදාළ දුරකථන අංකයට අයිති සියලුම ජොබ් විස්තර ලබා ගැනීම
             const { data: jobs, error } = await supabaseClient
                 .from('jobs')
                 .select('*')
                 .eq('customer_phone', customerPhone)
                 .order('created_at', { ascending: false });
 
+            // දත්ත ලබාගැනීමේදී දෝෂයක් සිදු වුවහොත්
             if (error) {
                 customerJobContainer.innerHTML = `<p style="color: red; text-align: center;">Error loading details: ${error.message}</p>`;
                 return;
             }
 
-            if (jobs.length === 0) {
+            // අදාළ අංකයට ජොබ් කිසිවක් නොමැති නම්
+            if (!jobs || jobs.length === 0) {
                 customerJobContainer.innerHTML = `<p style="text-align: center; color: #666;">No jobs found for this number.</p>`;
                 return;
             }
 
+            // මුලින් තිබූ 'Loading...' පණිවිඩය ඉවත් කිරීම
             customerJobContainer.innerHTML = '';
             
-            // හමුවන සියලුම ජොබ් එකින් එක කාඩ් එකක් ලෙස පෙන්වීම
+            // හමුවන සියලුම ජොබ් එකින් එක කාඩ් එකක් ලෙස සකසා පෙන්වීම
             jobs.forEach(job => {
                 const jobCard = document.createElement('div');
+                jobCard.className = 'card';
                 jobCard.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px;";
                 
-                // ස්ටේටස් එකට අදාළ පාට සහ අයිකන් එක තෝරා ගැනීම
+                // ජොබ් එකේ තත්ත්වය (Status) අනුව වර්ණය සහ අයිකනය වෙනස් කිරීම
                 let statusHtml = '';
                 if (job.status === 'Finished') {
                     statusHtml = `<span style="color: green; font-weight: bold;">🟢 Finished</span>`;
@@ -72,17 +96,17 @@
                     statusHtml = `<span style="color: orange; font-weight: bold;">⏳ Pending</span>`;
                 }
 
-                // මූලික විස්තර
+                // භාණ්ඩයේ මූලික විස්තර සකස් කිරීම
                 let cardContent = `
-                    <p><strong>Item:</strong> ${job.item}</p>
-                    <p><strong>Model:</strong> ${job.model}</p>
-                    <p><strong>Serial Number:</strong> ${job.serial_number}</p>
-                    <p><strong>Fault:</strong> ${job.fault}</p>
+                    <p><strong>Item:</strong> ${job.item || 'N/A'}</p>
+                    <p><strong>Model:</strong> ${job.model || 'N/A'}</p>
+                    <p><strong>Serial Number:</strong> ${job.serial_number || 'N/A'}</p>
+                    <p><strong>Fault:</strong> ${job.fault || 'N/A'}</p>
                     <p><strong>Status:</strong> ${statusHtml}</p>
                     <p style="font-size: 12px; color: #777;">Registered Date: ${new Date(job.created_at).toLocaleString()}</p>
                 `;
 
-                // ජොබ් එක Finished නම් පමණක් Repair Charges, Description, Photo සහ අර විශේෂ පණිවිඩය පෙන්වීම
+                // ජොබ් එක සම්පූර්ණ කර ඇත්නම් (Finished) පමණක් අදාළ අගයන්, විස්තර සහ පින්තූර පෙන්වීම
                 if (job.status === 'Finished') {
                     cardContent += `
                         <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
@@ -90,8 +114,10 @@
                             <p><strong>Repair Charges:</strong> Rs. ${job.repair_charges || 0}</p>
                             <p><strong>Repair Description / Parts:</strong> ${job.description || 'N/A'}</p>
                             
+                            <!-- මීට අදාළ ෆොටෝ එකක් ඩේටාබේස් එකේ ඇත්නම් පමණක් පෙන්වීම -->
                             ${job.photo_url ? `<p><strong>Repair Photo:</strong><br><img src="${job.photo_url}" alt="Repair Photo" style="max-width: 100%; height: auto; margin-top: 10px; border-radius: 4px; border: 1px solid #ccc;"></p>` : ''}
                             
+                            <!-- පාරිභෝගිකයාට දින 3ක් ඇතුළත භාණ්ඩය රැගෙන යාමට දන්වන විශේෂ දැනුම්දීම -->
                             <p style="margin-top: 15px; font-weight: bold; color: #155724; background: #d4edda; padding: 10px; border-radius: 4px; text-align: center;">
                                 කරුණාකර දින 03 තුළ පැමිණ ඔබගේ භාණ්ඩය රැගෙන යාමට කරුණික වන්න.
                             </p>
