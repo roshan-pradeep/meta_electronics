@@ -28,7 +28,7 @@
                 <h2 style="margin: 0; font-size: 20px;">Job Status</h2>
             </div>
             
-            <!-- මුල් පිටුවට (Home/Login) නැවත යාමට ඇති බොත්තම -->
+            <!-- මුල් පිටුවට (Login Page) නැවත යාමට ඇති බොත්තම -->
             <button onclick="window.location.href='index.html'" class="btn" style="width: auto; padding: 6px 15px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Home</button>
         </div>
         
@@ -39,7 +39,7 @@
     </div>
 
     <script>
-        // Supabase සේවාදායකය සඳහා අවශ්‍ය URL සහ Anon Key සැකසීම (RLS public select policy සමඟ ක්‍රියා කරයි)
+        // Supabase සේවාදායකය සඳහා අවශ්‍ය URL සහ Anon Key සැකසීම
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -57,9 +57,9 @@
             const urlParams = new URLSearchParams(window.location.search);
             const customerPhone = urlParams.get('phone');
 
-            // දුරකථන අංකයක් URL එකේ නොමැති නම් දෝෂ පණිවිඩයක් පෙන්වීම
+            // දුරකථන අංකයක් URL එකේ නොමැති නම් කෙලින්ම ලොගින් පිටුවට (index.html) යැවීම
             if (!customerPhone) {
-                customerJobContainer.innerHTML = `<p style="color: red; text-align: center;">Customer phone number not found in URL!</p>`;
+                window.location.href = 'index.html';
                 return;
             }
 
@@ -78,7 +78,7 @@
 
             // අදාළ අංකයට ජොබ් කිසිවක් ඩේටාබේස් එකේ නොමැති නම්
             if (!jobs || jobs.length === 0) {
-                customerJobContainer.innerHTML = `<p style="text-align: center; color: #666;">No jobs found for this number.</p>`;
+                customerJobContainer.innerHTML = `<p style="text-align: center; color: #666;">No jobs found for this phone number.</p>`;
                 return;
             }
 
