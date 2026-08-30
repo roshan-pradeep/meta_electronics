@@ -19,17 +19,13 @@
     <!-- ප්‍රධාන අන්තර්ගතය අඩංගු කන්ටේනරය -->
     <div class="container" style="max-width: 600px; margin-top: 30px; text-align: left;">
         
-        <!-- ඉහළ ශීර්ෂකය (Header): ලාංඡනය, මාතෘකාව සහ Home බොත්තම එකම පේළියක පෙන්වීම -->
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 15px;">
+        <!-- ඉහළ ශීර්ෂකය (Header): ලාංඡනය සහ මාතෘකාව පමණක් පෙන්වීම (Home බොත්තම ඉවත් කර ඇත) -->
+        <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 15px; gap: 12px;">
             
             <!-- වම් පැත්තෙන් ලාංඡනය (logo.png) සහ මාතෘකාව එක පෙළට -->
-            <div style="display: flex; align-items: center; gap: 12px;">
-                <img src="logo.png" alt="Meta Electronics Logo" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
-                <h2 style="margin: 0; font-size: 20px;">Job Status</h2>
-            </div>
+            <img src="logo.png" alt="Meta Electronics Logo" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
+            <h2 style="margin: 0; font-size: 20px;">Job Status Details</h2>
             
-            <!-- මුල් පිටුවට (Login Page) නැවත යාමට ඇති බොත්තම -->
-            <button onclick="window.location.href='index.html'" class="btn" style="width: auto; padding: 6px 15px; background-color: #6c757d; color: white; border: none; border-radius: 4px; cursor: pointer;">Home</button>
         </div>
         
         <!-- පාරිභෝගිකයාගේ ජොබ් විස්තර ඩේටාබේස් එකෙන් ගෙනවිත් පෙන්වන ප්‍රධාන තැන -->
@@ -57,9 +53,9 @@
             const urlParams = new URLSearchParams(window.location.search);
             const customerPhone = urlParams.get('phone');
 
-            // දුරකථන අංකයක් URL එකේ නොමැති නම් කෙලින්ම ලොගින් පිටුවට (index.html) යැවීම
+            // දුරකථන අංකයක් URL එකේ නොමැති නම් වෙනත් තැනකට යැවීම වෙනුවට දෝෂ පණිවිඩයක් පෙන්වීම
             if (!customerPhone) {
-                window.location.href = 'index.html';
+                customerJobContainer.innerHTML = `<p style="color: red; text-align: center;">Invalid link or phone number not found!</p>`;
                 return;
             }
 
