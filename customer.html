@@ -19,13 +19,10 @@
     <!-- ප්‍රධාන අන්තර්ගතය අඩංගු කන්ටේනරය -->
     <div class="container" style="max-width: 600px; margin-top: 30px; text-align: left;">
         
-        <!-- ඉහළ ශීර්ෂකය (Header): ලාංඡනය සහ මාතෘකාව පමණක් පෙන්වීම (Home බොත්තම ඉවත් කර ඇත) -->
+        <!-- ඉහළ ශීර්ෂකය (Header): ලාංඡනය සහ මාතෘකාව පමණක් පෙන්වීම -->
         <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 15px; gap: 12px;">
-            
-            <!-- වම් පැත්තෙන් ලාංඡනය (logo.png) සහ මාතෘකාව එක පෙළට -->
             <img src="logo.png" alt="Meta Electronics Logo" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
             <h2 style="margin: 0; font-size: 20px;">Job Status Details</h2>
-            
         </div>
         
         <!-- පාරිභෝගිකයාගේ ජොබ් විස්තර ඩේටාබේස් එකෙන් ගෙනවිත් පෙන්වන ප්‍රධාන තැන -->
@@ -53,7 +50,7 @@
             const urlParams = new URLSearchParams(window.location.search);
             const customerPhone = urlParams.get('phone');
 
-            // දුරකථන අංකයක් URL එකේ නොමැති නම් වෙනත් තැනකට යැවීම වෙනුවට දෝෂ පණිවිඩයක් පෙන්වීම
+            // දුරකථන අංකයක් URL එකේ නොමැති නම් දෝෂ පණිවිඩයක් පෙන්වීම
             if (!customerPhone) {
                 customerJobContainer.innerHTML = `<p style="color: red; text-align: center;">Invalid link or phone number not found!</p>`;
                 return;
@@ -105,23 +102,26 @@
                     <p style="font-size: 12px; color: #777;">Registered Date: ${new Date(job.created_at).toLocaleString()}</p>
                 `;
 
-                // ජොබ් එක සම්පූර්ණ කර ඇත්නම් (Finished) පමණක් අදාළ අගයන්, විස්තර සහ පින්තූර පෙන්වීම
+                // ජොබ් එක සම්පූර්ණ කර ඇත්නම් (Finished) පමණක් අදාළ ගාස්තු, විස්තර සහ පින්තූර පෙන්වීම
                 if (job.status === 'Finished') {
                     cardContent += `
                         <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
                         <div style="background: #eef9ee; padding: 15px; border-radius: 6px; border: 1px solid #c3e6cb;">
                             <p><strong>Repair Charges:</strong> Rs. ${job.repair_charges || 0}</p>
                             <p><strong>Repair Description / Parts:</strong> ${job.description || 'N/A'}</p>
-                            
-                            <!-- මීට අදාළ ෆොටෝ එකක් ඩේටාබේස් එකේ ඇත්නම් පමණක් එය පෙන්වීම -->
-                            ${job.photo_url ? `<p><strong>Repair Photo:</strong><br><img src="${job.photo_url}" alt="Repair Photo" style="max-width: 100%; height: auto; margin-top: 10px; border-radius: 4px; border: 1px solid #ccc;"></p>` : ''}
-                            
-                            <!-- පාරිභෝගිකයාට දින 3ක් ඇතුළත භාණ්ඩය රැගෙන යාමට දන්වන විශේෂ දැනුම්දීම -->
-                            <p style="margin-top: 15px; font-weight: bold; color: #155724; background: #d4edda; padding: 10px; border-radius: 4px; text-align: center;">
-                                කරුණාකර දින 03 තුළ පැමිණ ඔබගේ භාණ්ඩය රැගෙන යාමට කරුණික වන්න.
-                            </p>
-                        </div>
                     `;
+
+                    // රපයාර් කළ අයිතමයේ පින්තූරයක් (Photo URL) ඩේටාබේස් එකේ ගබඩා වී ඇත්නම් පමණක් එය පෙන්වීම
+                    if (job.photo_url) {
+                        cardContent += `
+                            <p style="margin-top: 10px;"><strong>Repair Photo:</strong></p>
+                            <a href="${job.photo_url}" target="_blank">
+                                <img src="${job.photo_url}" alt="Repair Photo" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #ccc; margin-top: 5px;">
+                            </a>
+                        `;
+                    }
+
+                    cardContent += `</div>`;
                 }
 
                 jobCard.innerHTML = cardContent;

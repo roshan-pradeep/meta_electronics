@@ -16,8 +16,6 @@
 </head>
 <body class="light-mode">
 
-   
-
     <div class="container" style="max-width: 600px; margin-top: 20px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Client Settings</h2>
@@ -109,7 +107,7 @@
                 return;
             }
 
-            // profiles ටේබල් එකේ අදාළ යූසර්ගේ අයිඩී (id) එකට අදාළ ෆෝන් නම්බර් එක අප්ඩේට් කිරීම (RLS authenticated policy මඟින් ආරක්ෂා කර ඇත)
+            // profiles ටේබල් එකේ අදාළ යූසර්ගේ අයිඩී (id) එකට අදාළ ෆෝන් නම්බර් එක අප්ඩේට් කිරීම
             const { error: profileError } = await supabaseClient
                 .from('profiles')
                 .upsert({ id: user.id, phone: newPhoneInput });
@@ -138,9 +136,9 @@
             e.preventDefault();
             passwordMsg.textContent = '';
 
-            const newPasswordInput = document.getElementById('new-password').value.trim();
+            const newPasswordInput = document.getElementById('new-password').value;
 
-            // ලොග් වී සිටින යූසර්ගේ පාස්වර්ඩ් එක Supabase Auth updateUser මඟින් වෙනස් කිරීම
+            // Supabase Auth එක හරහා යූසර්ගේ පාස්වර්ඩ් එක අප්ඩේට් කිරීම
             const { error: passwordError } = await supabaseClient.auth.updateUser({
                 password: newPasswordInput
             });
@@ -150,10 +148,10 @@
                 passwordMsg.textContent = "Error: " + passwordError.message;
             } else {
                 passwordMsg.style.color = 'green';
-                passwordMsg.textContent = "Password updated successfully! Please login again with your new password in 2 seconds...";
+                passwordMsg.textContent = "Password updated successfully! Logging out in 2 seconds...";
                 changePasswordForm.reset();
 
-                // පාස්වර්ඩ් එක වෙනස් වූ පසු ආරක්ෂාව සඳහා ලොග్‌අවුට් කර නැවත ලොගින් පේජ් එකට යැවීම
+                // පාස්වර්ඩ් එක වෙනස් කළ පසු තත්පර 2කින් ලොග්රවුට් කර නැවත ලොග් වීමට සැලැස්වීම
                 setTimeout(async () => {
                     await supabaseClient.auth.signOut();
                     window.location.href = 'index.html';

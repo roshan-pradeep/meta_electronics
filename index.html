@@ -56,14 +56,27 @@
                 <button id="logout-btn" class="btn logout-btn" style="width: auto; padding: 6px 12px;">Logout</button>
             </div>
 
-            <!-- ඩෑෂ්බෝඩ් එකේ ප්‍රධාන මෙහෙයුම් බොත්තම් ජාලය -->
-            <div class="button-grid">
-                <!-- 'Add Job' ක්ලික් කළ විට අදාළ ෆෝම් එක පෙන්වීමට සකසා ඇත -->
+            <!-- ඩෑෂ්බෝඩ් එකේ ප්‍රධාන මෙහෙයුම් බොත්තම් ජාලය (ඔබ ඉල්ලා ඇති නියමිත පිළිවෙළට සකසා ඇත) -->
+            <div class="button-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
+                
+                <!-- 1. Add Job (මෙය ක්ලික් කළ විට පෝරමය පෙන්වයි) -->
                 <button class="dash-btn" onclick="showSection('add-job-section')">Add Job</button>
-                <!-- Pending Jobs ක්ලික් කළ විට pending-jobs.html ෆයිල් එක විවෘත වන ලෙස සකස් කරන ලදී -->
+                
+                <!-- 2. Pending Jobs -->
                 <button class="dash-btn" onclick="openPage('pending-jobs')">Pending Jobs</button>
+                
+                <!-- 3. Approved Jobs -->
+                <button class="dash-btn" onclick="openPage('approved-jobs')">Approved Jobs</button>
+                
+                <!-- 4. Non Approved Jobs -->
+                <button class="dash-btn" onclick="openPage('non-approved-jobs')">Non Approved Jobs</button>
+                
+                <!-- 5. Finish Jobs -->
                 <button class="dash-btn" onclick="openPage('finish-jobs')">Finish Jobs</button>
+                
+                <!-- 6. Settings -->
                 <button class="dash-btn" onclick="openPage('settings')">Settings</button>
+                
             </div>
         </div>
 
@@ -155,7 +168,7 @@
                 return;
             }
 
-            // 2. ලොග් වූ යූසර්ගේ ID එකට අදාළ දුරකථන අංකය පමණක් profiles ටේබල් එකෙන් ලබා ගැනීම (Multiple rows ගැටළුව මඟහරවා ගැනීමට .eq පාවිච්චි කර ඇත)
+            // 2. ලොග් වූ යූසර්ගේ ID එකට අදාළ දුරකථන අංකය පමණක් profiles ටේබල් එකෙන් ලබා ගැනීම
             const { data: profileData, error: profileError } = await supabaseClient
                 .from('profiles')
                 .select('phone')
@@ -240,16 +253,20 @@
             }
         });
 
-        // පිටු මාරු කිරීම සඳහා සකස් කළ කාර්යය (Pending, Finish, Settings වෙත යාමට සහ ඩෑෂ්බෝඩ් එකෙන් අනෙක් පේජ්වලට යාමට)
+        // පිටු මාරු කිරීම සඳහා සකස් කළ කාර්යය (ඔබ ඉල්ලා ඇති අලුත් ෆයිල් ලින්ක් සමඟ)
         function openPage(pageName) {
             if (pageName === 'pending-jobs') {
                 window.location.href = 'pending-jobs.html'; // Pending Jobs පේජ් එකට යාමට
+            } else if (pageName === 'approved-jobs') {
+                window.location.href = 'approved-jobs.html'; // Approved Jobs පේජ් එකට යාමට
+            } else if (pageName === 'non-approved-jobs') {
+                window.location.href = 'non-approved-jobs.html'; // Non Approved Jobs පේජ් එකට යාමට
             } else if (pageName === 'finish-jobs') {
                 window.location.href = 'finish-jobs.html'; // Finish Jobs පේජ් එකට යාමට
             } else if (pageName === 'settings') {
                 window.location.href = 'settings.html'; // Settings පේජ් එකට යාමට
             } else if (pageName === 'dashboard') {
-                window.location.href = 'index.html'; // වෙනත් පේජ්වල සිට ප්‍රධාන ඩෑෂ්බෝඩ් එකට (index.html වෙත) පැමිණීමට
+                window.location.href = 'index.html'; // වෙනත් පේජ්වල සිට ප්‍රධාන ඩෑෂ්බෝඩ් එකට පැමිණීමට
             } else {
                 alert(pageName + " page will open soon!");
             }
