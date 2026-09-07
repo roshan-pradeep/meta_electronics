@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta Electronics - Non-Approved Jobs</title>
+    <!-- CSS ස්ටයිල් ෆයිල් එක සහ Supabase ස්ක්‍රිප්ට් එක සම්බන්ධ කිරීම -->
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body.light-mode { background-color: #f4f7f6; color: #333; }
+        body.dark-mode { background-color: #121212; color: #f1f1f1; }
+        body.dark-mode .card, body.dark-mode .container { background-color: #1e1e1e; color: #f1f1f1; border-color: #333; }
+    </style>
+</head>
+<body class="light-mode">
+
+    <div class="container" style="max-width: 800px; margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2>Non-Approved Jobs</h2>
+            <!-- ඩෑෂ්බෝඩ් එකට නැවත යාමට ඇති බොත්තම -->
+            <button onclick="openPage('dashboard')" class="btn" style="width: auto; padding: 8px 15px; background-color: #6c757d;">Dashboard</button>
+        </div>
+
+        <!-- අනුමත නොකළ (Non-Approved) ජොබ්ස් ලැයිස්තුව පෙන්වන තැන -->
+        <div id="non-approved-jobs-container">
+            <p style="text-align: center; color: #666;">Loading non-approved jobs...</p>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        const nonApprovedJobsContainer = document.getElementById('non-approved-jobs-container');
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            const savedTheme = localStorage.getItem('meta_theme') || 'light';
+            document.body.className = savedTheme + '-mode';
+
+            // ඩේටාබේස් එකෙන් 'Non-Approved' (හෝ Rejected) වූ ජොබ්ස් පමණක් ලබා ගැනීම
+            const { data: jobs, error } = await supabaseClient
+                .from('jobs')
+                .select('*')
+                .eq('status', 'Non-Approved')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                nonApprovedJobsContainer.innerHTML = `<p style="color: red; text-align: center;">Error loading jobs: ${error.message}</p>`;
+                return;
+            }
+
+            if (!jobs || jobs.length === 0) {
+                nonApprovedJobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No non-approved jobs found.</p>`;
+                return;
+            }
+
+            nonApprovedJobsContainer.innerHTML = '';
+
+            jobs.forEach(job => {
+                const jobCard = document.createElement('div');
+                jobCard.className = 'card';
+                jobCard.style.cssText = "background: #fff; border: 1px solid #ddd; padding: 20px; margin-bottom: 15px; border-radius: 8px;";
+                
+                jobCard.innerHTML = `
+                    <p><strong>Item:</strong> ${job.item || 'N/A'}</p>
+                    <p><strong>Model:</strong> ${job.model || 'N/A'}</p>
+                    <p><strong>Serial Number:</strong> ${job.serial_number || 'N/A'}</p>
+                    <p><strong>Fault:</strong> ${job.fault || 'N/A'}</p>
+                    <p><strong>Customer Phone:</strong> ${job.customer_phone || 'N/A'}</p>
+                    <p><strong>Status:</strong> <span style="color: red; font-weight: bold;">Non-Approved</span></p>
+                    <p style="font-size: 12px; color: #777;">Registered Date: ${new Date(job.created_at).toLocaleString()}</p>
+                `;
+                nonApprovedJobsContainer.appendChild(jobCard);
+            });
+        });
+
+        function openPage(pageName) {
+            if (pageName === 'dashboard') {
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>

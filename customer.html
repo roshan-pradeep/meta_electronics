@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Electronics - Job Status</title>
+    <title>Meta Electronics - Job Status & Estimate</title>
     <!-- CSS ස්ටයිල් ෆයිල් එක සහ Supabase ස්ක්‍රිප්ට් එක සම්බන්ධ කිරීම -->
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -22,12 +22,12 @@
         <!-- ඉහළ ශීර්ෂකය (Header): ලාංඡනය සහ මාතෘකාව පමණක් පෙන්වීම -->
         <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 15px; gap: 12px;">
             <img src="logo.png" alt="Meta Electronics Logo" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
-            <h2 style="margin: 0; font-size: 20px;">Job Status Details</h2>
+            <h2 style="margin: 0; font-size: 20px;">Job Status & Estimate Details</h2>
         </div>
         
-        <!-- පාරිභෝගිකයාගේ ජොබ් විස්තර ඩේටාබේස් එකෙන් ගෙනවිත් පෙන්වන ප්‍රධාන තැන -->
+        <!-- පාරිභෝගිකයාගේ ජොබ් සහ එස්ටිමේට් විස්තර ඩේටාබේස් එකෙන් ගෙනවිත් පෙන්වන ප්‍රධාන තැන -->
         <div id="customer-job-container">
-            <p style="text-align: center; color: #666;">Loading job details...</p>
+            <p style="text-align: center; color: #666;">Loading details...</p>
         </div>
     </div>
 
@@ -37,97 +37,119 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // HTML හි ජොබ් විස්තර පෙන්වන ඩිව් (div) එක ලබා ගැනීම
+        // HTML හි විස්තර පෙන්වන ඩිව් (div) එක ලබා ගැනීම
         const customerJobContainer = document.getElementById('customer-job-container');
 
         // පේජ් එක බ්‍රව්සර් එකේ ලෝඩ් වන විට ක්‍රියාත්මක වන ප්‍රධාන කොටස
         window.addEventListener('DOMContentLoaded', async () => {
-            // වෙනත් පිටුවල සේව් කර ඇති තේම් එක (Theme - Light/Dark) ලබාගෙන පිටුවට ඇතුළත් කිරීම
             const savedTheme = localStorage.getItem('meta_theme') || 'light';
             document.body.className = savedTheme + '-mode';
 
-            // URL එකේ සඳහන් කර ඇති පාරිභෝගික දුරකථන අංකය ලබා ගැනීම (Ex: customer.html?phone=0771234567)
+            // URL එකේ ඇති Job ID එක හෝ Phone එක පරීක්ෂා කිරීම (අප දැන් id එක හරහා යවන බැවින් id එක ලබා ගනී)
             const urlParams = new URLSearchParams(window.location.search);
+            const jobId = urlParams.get('id');
             const customerPhone = urlParams.get('phone');
 
-            // දුරකථන අංකයක් URL එකේ නොමැති නම් දෝෂ පණිවිඩයක් පෙන්වීම
-            if (!customerPhone) {
-                customerJobContainer.innerHTML = `<p style="color: red; text-align: center;">Invalid link or phone number not found!</p>`;
+            if (!jobId && !customerPhone) {
+                customerJobContainer.innerHTML = `<p style="color: red; text-align: center;">Invalid link or missing parameters!</p>`;
                 return;
             }
 
-            // Supabase ඩේටාබේස් එකෙන් අදාළ දුරකථන අංකයට අයිති සියලුම ජොබ් විස්තර ලබා ගැනීම
-            const { data: jobs, error } = await supabaseClient
-                .from('jobs')
-                .select('*')
-                .eq('customer_phone', customerPhone)
-                .order('created_at', { ascending: false });
+            let query = supabaseClient.from('jobs').select('*');
+            
+            if (jobId) {
+                query = query.eq('id', jobId);
+            } else {
+                query = query.eq('customer_phone', customerPhone).order('created_at', { ascending: false });
+            }
 
-            // දත්ත ලබාගැනීමේදී දෝෂයක් සිදු වුවහොත් එය පෙන්වීම
+            const { data: jobs, error } = await query;
+
             if (error) {
                 customerJobContainer.innerHTML = `<p style="color: red; text-align: center;">Error loading details: ${error.message}</p>`;
                 return;
             }
 
-            // අදාළ අංකයට ජොබ් කිසිවක් ඩේටාබේස් එකේ නොමැති නම්
             if (!jobs || jobs.length === 0) {
-                customerJobContainer.innerHTML = `<p style="text-align: center; color: #666;">No jobs found for this phone number.</p>`;
+                customerJobContainer.innerHTML = `<p style="text-align: center; color: #666;">No jobs found.</p>`;
                 return;
             }
 
-            // මුලින් තිබූ 'Loading...' පණිවිඩය ඉවත් කිරීම
             customerJobContainer.innerHTML = '';
             
-            // ඩේටාබේස් එකෙන් හමුවන සියලුම ජොබ් එකින් එක කාඩ් එකක් ලෙස සකසා පෙන්වීම
             jobs.forEach(job => {
                 const jobCard = document.createElement('div');
                 jobCard.className = 'card';
                 jobCard.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px;";
                 
-                // ජොබ් එකේ තත්ත්වය (Status) අනුව වර්ණය සහ අයිකනය වෙනස් කිරීම
-                let statusHtml = '';
-                if (job.status === 'Finished') {
-                    statusHtml = `<span style="color: green; font-weight: bold;">🟢 Finished</span>`;
-                } else {
-                    statusHtml = `<span style="color: orange; font-weight: bold;">⏳ Pending</span>`;
-                }
+                // ජොබ් එකේ තත්ත්වය (Status) අනුව වර්ණය පෙන්වීම
+                let statusColor = 'orange';
+                if (job.status === 'Approved') statusColor = 'blue';
+                else if (job.status === 'Non-Approved') statusColor = 'red';
+                else if (job.status === 'Finished') statusColor = 'green';
 
-                // භාණ්ඩයේ මූලික විස්තර සකස් කිරීම
                 let cardContent = `
                     <p><strong>Item:</strong> ${job.item || 'N/A'}</p>
                     <p><strong>Model:</strong> ${job.model || 'N/A'}</p>
                     <p><strong>Serial Number:</strong> ${job.serial_number || 'N/A'}</p>
                     <p><strong>Fault:</strong> ${job.fault || 'N/A'}</p>
-                    <p><strong>Status:</strong> ${statusHtml}</p>
+                    <p><strong>Status:</strong> <span style="color: ${statusColor}; font-weight: bold;">${job.status}</span></p>
                     <p style="font-size: 12px; color: #777;">Registered Date: ${new Date(job.created_at).toLocaleString()}</p>
                 `;
 
-                // ජොබ් එක සම්පූර්ණ කර ඇත්නම් (Finished) පමණක් අදාළ ගාස්තු, විස්තර සහ පින්තූර පෙන්වීම
-                if (job.status === 'Finished') {
-                    cardContent += `
-                        <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
-                        <div style="background: #eef9ee; padding: 15px; border-radius: 6px; border: 1px solid #c3e6cb;">
-                            <p><strong>Repair Charges:</strong> Rs. ${job.repair_charges || 0}</p>
-                            <p><strong>Repair Description / Parts:</strong> ${job.description || 'N/A'}</p>
-                    `;
+                // Estimate එකක් හෝ Charges ඇත්නම් සහ වැඩේ තවමත් Pending නම් හෝ අනුමත කිරීමට බලාපොරොත්තු වේ නම්
+                cardContent += `
+                    <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
+                    <div style="background: #fff3cd; padding: 15px; border-radius: 6px; border: 1px solid #ffeeba;">
+                        <h4 style="margin-top: 0; color: #856404;">Repair Estimate Details</h4>
+                        <p><strong>Estimated Cost:</strong> <span style="color: #28a745; font-size: 16px; font-weight: bold;">Rs. ${job.repair_charges || 0}</span></p>
+                        <p><strong>Repair Description / Parts:</strong> ${job.description || 'No description provided.'}</p>
+                `;
 
-                    // රපයාර් කළ අයිතමයේ පින්තූරයක් (Photo URL) ඩේටාබේස් එකේ ගබඩා වී ඇත්නම් පමණක් එය පෙන්වීම
-                    if (job.photo_url) {
-                        cardContent += `
-                            <p style="margin-top: 10px;"><strong>Repair Photo:</strong></p>
+                // පාරිභෝගිකයාට Approve හෝ Non Approve කිරීමට බොත්තම් පෙන්වීම (Pending හෝ වෙනත් අවස්ථාවක වුවද වෙනස් කරගත හැක)
+                cardContent += `
+                        <div style="margin-top: 20px; display: flex; gap: 10px;">
+                            <button onclick="updateStatus('${job.id}', 'Approved')" style="flex: 1; background-color: #28a745; color: white; border: none; padding: 12px; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer;">Approve</button>
+                            <button onclick="updateStatus('${job.id}', 'Non-Approved')" style="flex: 1; background-color: #dc3545; color: white; border: none; padding: 12px; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer;">Non Approve</button>
+                        </div>
+                    </div>
+                `;
+
+                // ජොබ් එක Finished වී ඇත්නම් ෆොටෝ එක පෙන්වීම
+                if (job.status === 'Finished' && job.photo_url) {
+                    cardContent += `
+                        <div style="margin-top: 15px; background: #eef9ee; padding: 15px; border-radius: 6px; border: 1px solid #c3e6cb;">
+                            <p style="margin-top: 0;"><strong>Repair Photo:</strong></p>
                             <a href="${job.photo_url}" target="_blank">
                                 <img src="${job.photo_url}" alt="Repair Photo" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #ccc; margin-top: 5px;">
                             </a>
-                        `;
-                    }
-
-                    cardContent += `</div>`;
+                        </div>
+                    `;
                 }
 
                 jobCard.innerHTML = cardContent;
                 customerJobContainer.appendChild(jobCard);
             });
         });
+
+        // කස්ටමර් Approve හෝ Non Approve කළ විට ක්‍රියාත්මක වන ෆන්ක්ෂන් එක
+        async function updateStatus(jobId, newStatus) {
+            const { error } = await supabaseClient
+                .from('jobs')
+                .update({ status: newStatus })
+                .eq('id', jobId);
+
+            if (error) {
+                alert("Error updating status: " + error.message);
+            } else {
+                if (newStatus === 'Approved') {
+                    alert("Successfully Approved! Admin has been notified.");
+                } else {
+                    alert("Status updated to Non-Approved.");
+                }
+                location.reload(); // පේජ් එක රිෆ්‍රෙෂ් කර ස්ටේටස් වෙනස්වීම පෙන්වීම
+            }
+        }
     </script>
 </body>
 </html>
