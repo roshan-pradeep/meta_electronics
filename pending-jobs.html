@@ -209,7 +209,7 @@
             document.getElementById('customer-jobs-modal').style.display = 'none';
         }
 
-        // Estimate එක සේව් කර කස්ටමර්ට WhatsApp හරහා ලින්ක් එක යැවීම
+        // Estimate එක සේව් කර කස්ටමර්ට WhatsApp හරහා ලින්ක් එක යැවීම (මෙතැන හරියටම phone= මඟින් හැදේ)
         async function sendEstimate(jobId, customerPhone, item, model) {
             const chargesInput = document.getElementById(`charges-${jobId}`).value;
             const descInput = document.getElementById(`desc-${jobId}`).value;
@@ -235,7 +235,8 @@
                 alert("Estimate saved successfully! Redirecting to WhatsApp...");
 
                 let cleanPhone = customerPhone.replace(/^0/, '');
-                // WhatsApp මැසේජ් එක ඇතුළට customer.html?phone= අංකය එකතු කර ඇත
+                
+                // මෙන්න මෙතන හරියටම ?phone=${customerPhone} ලෙස දමා ඇත
                 let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: https://roshan-pradeep.github.io/meta_electronics/customer.html?phone=${customerPhone}`;
                 let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
                 
