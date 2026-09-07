@@ -33,7 +33,6 @@
             await fetchSpecificJob(jobId);
         });
 
-        // නිශ්චිත Job ID එකට අදාළ එක ජොබ් එකක් පමණක් ලබා ගැනීම
         async function fetchSpecificJob(id) {
             const { data: job, error } = await supabaseClient
                 .from('jobs')
@@ -89,17 +88,21 @@
         }
 
         async function updateJobStatus(id, newStatus) {
-            const { error } = await supabaseClient
+            console.log("Updating job:", id, "to status:", newStatus);
+
+            const { data, error } = await supabaseClient
                 .from('jobs')
                 .update({ status: newStatus })
-                .eq('id', id);
+                .eq('id', id)
+                .select();
 
             if (error) {
+                console.error("Supabase Error:", error);
                 alert("Error updating status: " + error.message);
             } else {
+                console.log("Update success:", data);
                 alert(`Job status updated to ${newStatus} successfully!`);
                 
-                // ක්ලික් කළ විගස බොත්තම් ඉවත් කර Responded මැසේජ් එක පෙන්වීම
                 const btnContainer = document.getElementById('btn-container');
                 if (btnContainer) {
                     btnContainer.innerHTML = `
