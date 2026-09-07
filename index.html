@@ -217,7 +217,7 @@
             const fault = document.getElementById('fault').value;
             const customerPhone = document.getElementById('customer_phone').value.trim();
 
-            // jobs ටේබල් එකට දත්ත ඇතුළත් කිරීම
+            // jobs ටේබල් එකට දත්ත ඇතුළත් කර, අලුතින් හැදුණු id එක ලබා ගැනීමට .select() එකතු කිරීම
             const { data, error } = await supabaseClient
                 .from('jobs')
                 .insert([
@@ -229,7 +229,8 @@
                         customer_phone: customerPhone, 
                         status: 'Pending' // අලුතින් දමන ජොබ් එකක් මූලිකව 'Pending' ලෙස සටහන් වේ
                     }
-                ]);
+                ])
+                .select(); // අත්‍යවශ්‍යයි: අලුතින් හැදුණු රෝ (row) එකේ දත්ත (id එක සමඟ) ආපහු ලබා ගැනීමට
 
             // දෝෂයක් ඇත්නම්
             if (error) {
@@ -242,8 +243,11 @@
                 jobMsg.textContent = "Job Registered Successfully!";
                 addJobForm.reset(); // ෆෝම් එක හිස් කිරීම
 
-                // පාරිභෝගිකයාගේ WhatsApp අංකයට ස්වයංක්‍රීයව GitHub Pages ලින්ක් එක යැවීම සඳහා සකස් කිරීම
-                let customerMsg = `Hello, your job for ${item} (${model}) has been registered at Meta Electronics. Track status here: https://roshan-pradeep.github.io/meta_electronics/customer.html?phone=${customerPhone}`;
+                // .select() මඟින් ලැබුණු අලුත්ම ජොබ් එකේ දත්ත වලින් id එක ලබා ගැනීම
+                const insertedJob = data[0];
+
+                // පාරිභෝගිකයාගේ WhatsApp අංකයට ස්වයංක්‍රීයව අදාළ Job ID එක සහිත GitHub Pages ලින්ක් එක යැවීම
+                let customerMsg = `Hello, your job for ${item} (${model}) has been registered at Meta Electronics. Track status here: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${insertedJob.id}`;
                 let whatsappUrl = `https://wa.me/94${customerPhone.replace(/^0/, '')}?text=${encodeURIComponent(customerMsg)}`;
                 
                 // තත්පර 1කින් ස්වයංක්‍රීයව WhatsApp වෙත යොමු කිරීම
