@@ -53,7 +53,7 @@
             await fetchPendingJobs();
         });
 
-        // Supabase වලින් 'Pending' තත්ත්වයේ ඇති ජොබ්ස් සියල්ල ලබා ගන්නා ෆੰක්ෂන් එක
+        // Supabase වලින් 'Pending' තත්ත්වයේ ඇති ජොබ්ස් සියල්ල ලබා ගන්නා ෆන්ක්ෂන් එක
         async function fetchPendingJobs() {
             const { data: jobs, error } = await supabaseClient
                 .from('jobs')
@@ -226,9 +226,12 @@
 
                 let cleanPhone = customerPhone.replace(/^0/, '');
                 
-                // මෙන්න මෙතැනදී customer.html ලින්ක් එක හැදෙන අතර, අගට &action=admin එකතු කර ඇත.
-                // එවිට මේ ලින්ක් එකෙන් Adminට ගියහොත් පමණක් Approve / Non-Approved බටන් පෙනෙනු ඇත.
-                let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${jobId}&action=admin`;
+                // WhatsApp හරහා ලින්ක් එක කැඩී යාම වැළැක්වීමට URL එක වෙනම සකස් කිරීම
+                let baseUrl = "https://roshan-pradeep.github.io/meta_electronics/customer.html";
+                let linkWithParams = `${baseUrl}?id=${jobId}&action=admin`;
+
+                let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: ${linkWithParams}`;
+                
                 let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
                 
                 window.open(whatsappUrl, '_blank');
