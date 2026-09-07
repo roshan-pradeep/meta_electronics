@@ -24,6 +24,9 @@
         const container = document.getElementById('job-details-container');
         const urlParams = new URLSearchParams(window.location.search);
         const jobId = urlParams.get('id');
+        
+        // URL එකේ ?action=admin තියෙනවද බලයි (Admin පේජ් එකෙන් එනවා නම් පමණක් බටන් පෙන්වීමට)
+        const isAdminAction = urlParams.get('action') === 'admin';
 
         window.addEventListener('DOMContentLoaded', async () => {
             if (!jobId) {
@@ -52,20 +55,30 @@
 
             container.innerHTML = '';
             const jobCard = document.createElement('div');
-            jobCard.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 20px; border-radius: 8px;";
+            jobCard.style.cssText = "background: #f9f9f9; border: 1.5px solid #ddd; padding: 20px; border-radius: 8px;";
             
             let actionButtonsHTML = '';
-            if (job.status === 'Pending') {
+            
+            // Pending වී ඇතත්, Admin ලින්ක් එකෙන් (Pending Jobs පේජ් එකෙන්) පැමිණි නම් පමණක් බටන් පෙන්වයි
+            if (job.status === 'Pending' && isAdminAction) {
                 actionButtonsHTML = `
                     <div id="action-buttons-wrapper" style="margin-top: 20px; display: flex; gap: 10px;">
                         <button onclick="updateJobStatus('${job.id}', 'Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Approve</button>
                         <button onclick="updateJobStatus('${job.id}', 'Non-Approved')" style="flex: 1; background: #dc3545; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Non-Approved</button>
                     </div>
                 `;
-            } else {
+            } else if (job.status !== 'Pending') {
+                // වෙනත් status එකක නම් ප්‍රතිචාර දැක්වූ බව පෙන්වයි
                 actionButtonsHTML = `
                     <div id="action-buttons-wrapper" style="margin-top: 20px; background: #e9ecef; padding: 12px; border-radius: 4px; text-align: center;">
-                        <p style="margin: 0; color: #495057; font-size: 14px; font-weight: bold;">✓ You have already responded to this estimate (${job.status}).</p>
+                        <p style="margin: 0; color: #495057; font-size: 14px; font-weight: bold;">✓ This estimate has been already responded (${job.status}).</p>
+                    </div>
+                `;
+            } else {
+                // සාමාන්‍ය කස්ටමර්ට ලින්ක් එකෙන් ආවොත් බටන් නොපෙන්වා දැනුම්දීමක් පෙන්වයි
+                actionButtonsHTML = `
+                    <div id="action-buttons-wrapper" style="margin-top: 20px; background: #fff3cd; padding: 12px; border-radius: 4px; text-align: center; border: 1px solid #ffeeba;">
+                        <p style="margin: 0; color: #856404; font-size: 14px; font-weight: bold;">ℹ️ Status: Pending Admin/Customer confirmation.</p>
                     </div>
                 `;
             }

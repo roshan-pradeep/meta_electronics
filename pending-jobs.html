@@ -4,24 +4,30 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meta Electronics - Pending Jobs & Estimate</title>
+    <!-- CSS ස්ටයිල් ෆයිල් එක සම්බන්ධ කිරීම -->
     <link rel="stylesheet" href="style.css">
+    <!-- Supabase JavaScript Library එක CDN එක හරහා ඇතුළත් කිරීම -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <div class="container" style="max-width: 800px;">
+        <!-- පිටුවේ උඩ කොටස (ශීර්ෂය සහ ඩෑෂ්බෝඩ් එකට යාමේ බොත්තම) -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Pending Repair Jobs (Estimate)</h2>
             <a href="index.html" class="btn" style="width: auto; padding: 8px 15px; text-decoration: none; background-color: #6c757d; text-align: center;">Dashboard</a>
         </div>
 
+        <!-- පාරිභෝගිකයින්ගේ දුරකථන අංක අනුව ෆිල්ටර් කිරීමට (Filter Buttons) හැදෙන කොටස -->
         <div id="phone-filter-container" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
 
+        <!-- පෙන්ඩින් ජොබ්ස් ලැයිස්තුව පෙන්වන ප්‍රධාන කොටස -->
         <div id="pending-jobs-container">
             <p style="text-align: center; color: #666; font-weight: bold;">Please click a phone number button above to view jobs.</p>
         </div>
     </div>
 
+    <!-- එකම පාරිභෝගිකයාගේ අනෙකුත් ජොබ්ස් බලා ගැනීමට පෙන්වන Popup Modal එක -->
     <div id="customer-jobs-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
         <div style="background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; text-align: left; position: relative;">
             <button onclick="closeModal()" style="position: absolute; top: 15px; right: 15px; background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Close X</button>
@@ -31,19 +37,23 @@
     </div>
 
     <script>
+        // Supabase සේවාදායකය සඳහා අවශ්‍ය URL සහ Anon Key නිවැරදිව සැකසීම
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+        // අවශ්‍ය HTML Elements JavaScript වෙත ලබා ගැනීම
         const pendingJobsContainer = document.getElementById('pending-jobs-container');
         const phoneFilterContainer = document.getElementById('phone-filter-container');
 
-        let allPendingJobs = [];
+        let allPendingJobs = []; // සියලුම පෙන්ඩින් ජොබ්ස් දත්ත තබා ගැනීමට විචල්‍යයක්
 
+        // පේජ් එක ලෝඩ් වන විට පෙන්ඩින් ජොබ්ස් දත්ත සර්වර් එකෙන් ලබා ගැනීම
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchPendingJobs();
         });
 
+        // Supabase වලින් 'Pending' තත්ත්වයේ ඇති ජොබ්ස් සියල්ල ලබා ගන්නා ෆੰක්ෂන් එක
         async function fetchPendingJobs() {
             const { data: jobs, error } = await supabaseClient
                 .from('jobs')
@@ -51,11 +61,13 @@
                 .eq('status', 'Pending')
                 .order('created_at', { ascending: false });
 
+            // දෝෂයක් ඇත්නම් පෙන්වීම
             if (error) {
                 pendingJobsContainer.innerHTML = `<p style="color: red; text-align: center;">Error loading jobs: ${error.message}</p>`;
                 return;
             }
 
+            // පෙන්ඩින් ජොබ්ස් කිසිවක් නැත්නම්
             if (jobs.length === 0) {
                 pendingJobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No pending jobs found.</p>`;
                 phoneFilterContainer.innerHTML = '';
@@ -63,32 +75,36 @@
             }
 
             allPendingJobs = jobs;
-            createPhoneFilterButtons(allPendingJobs);
+            createPhoneFilterButtons(allPendingJobs); // දුරකථන අංක අනුව ෆිල්ටර් බටන් සෑදීම
             pendingJobsContainer.innerHTML = `<p style="text-align: center; color: #666; font-weight: bold; background: #fff; padding: 20px; border: 1px dashed #ccc; border-radius: 8px;">👈 Please click a phone number button above to view pending jobs.</p>`;
         }
 
+        // පාරිභෝගිකයින්ගේ දුරකථන අංක එකතු කර උඩින් බටන් සාදන ෆන්ක්ෂන් එක
         function createPhoneFilterButtons(jobs) {
             phoneFilterContainer.innerHTML = '';
             const uniquePhones = [...new Set(jobs.map(job => job.customer_phone))];
 
+            // 'All Pending Jobs' බොත්තම සෑදීම
             const allBtn = document.createElement('button');
             allBtn.textContent = "All Pending Jobs";
             allBtn.style.cssText = "background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;";
             allBtn.onclick = () => displayJobs(allPendingJobs);
             phoneFilterContainer.appendChild(allBtn);
 
+            // එක් එක් පාරිභෝගික අංකයට වෙනම බොත්තම් සෑදීම
             uniquePhones.forEach(phone => {
                 const phoneBtn = document.createElement('button');
                 phoneBtn.innerHTML = `📞 ${phone}`;
                 phoneBtn.style.cssText = "background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;";
                 phoneBtn.onclick = () => {
                     const filteredJobs = allPendingJobs.filter(job => job.customer_phone === phone);
-                    displayJobs(filteredJobs);
+                    displayJobs(filteredJobs); // අදාළ අංකයට අයිති ජොබ්ස් පමණක් පෙන්වීම
                 };
                 phoneFilterContainer.appendChild(phoneBtn);
             });
         }
 
+        // තෝරාගත් ජොබ්ස් ලැයිස්තුව ස්ක්‍රීන් එකේ පෙන්වන ෆන්ක්ෂන් එක
         function displayJobs(jobs) {
             if (jobs.length === 0) {
                 pendingJobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No jobs match this filter.</p>`;
@@ -106,6 +122,7 @@
                     <p><strong>Serial Number:</strong> ${job.serial_number}</p>
                     <p><strong>Fault:</strong> ${job.fault}</p>
                     
+                    <!-- පාරිභෝගිකයාගේ අංකය ක්ලික් කළ විට ඔහුගේ අනෙකුත් ජොබ්ස් පෙන්වන මොඩාල් එක විවෘත වේ -->
                     <p><strong>Customer Phone:</strong> 
                         <button onclick="viewCustomerJobs('${job.customer_phone}')" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">
                             📞 ${job.customer_phone}
@@ -117,6 +134,7 @@
                     
                     <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
                     
+                    <!-- ඇස්තමේන්තු මිල (Charges) සහ විස්තරය (Description) ඇතුළත් කරන කොටස -->
                     <div style="background: #fff; padding: 15px; border: 1px solid #ccc; border-radius: 6px;">
                         <h4 style="margin-top: 0; color: #333;">Prepare & Send Estimate</h4>
                         
@@ -130,6 +148,7 @@
                             <textarea id="desc-${job.id}" placeholder="Enter repair details or needed parts" style="width: 100%; padding: 8px; box-sizing: border-box; height: 60px;"></textarea>
                         </div>
 
+                        <!-- ඇස්තමේන්තුව යැවීමේ බොත්තම -->
                         <button onclick="sendEstimate('${job.id}', '${job.customer_phone}', '${job.item}', '${job.model}')" class="btn" style="background-color: #ffc107; color: #000; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">Estimate Send to Customer</button>
                     </div>
                 `;
@@ -137,6 +156,7 @@
             });
         }
 
+        // පාරිභෝගිකයාගේ අංකය ක්ලික් කළ විට ඔහුගේ සියලුම ජොබ්ස් මෝඩාල් එකක පෙන්වීම
         async function viewCustomerJobs(phone) {
             const modal = document.getElementById('customer-jobs-modal');
             const modalTitle = document.getElementById('modal-title');
@@ -175,10 +195,12 @@
             });
         }
 
+        // මොඩාල් එක වසා දැමීම සඳහා
         function closeModal() {
             document.getElementById('customer-jobs-modal').style.display = 'none';
         }
 
+        // ඇස්තමේන්තු මිල සේවයට යොමු කර WhatsApp හරහා කස්ටමර්ට ලින්ක් එක යැවීම
         async function sendEstimate(jobId, customerPhone, item, model) {
             const chargesInput = document.getElementById(`charges-${jobId}`).value;
             const descInput = document.getElementById(`desc-${jobId}`).value;
@@ -188,6 +210,7 @@
                 return;
             }
 
+            // දත්ත බේස් එකට ඇස්තමේන්තු ගාස්තු සහ විස්තරය අප්ඩේට් කිරීම
             const { error } = await supabaseClient
                 .from('jobs')
                 .update({
@@ -203,12 +226,13 @@
 
                 let cleanPhone = customerPhone.replace(/^0/, '');
                 
-                // මෙන්න මෙතන ?id=${jobId} මඟින් නිශ්චිත ජොබ් එකට අදාළ ලින්ක් එක හැදේ
-                let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${jobId}`;
+                // මෙන්න මෙතැනදී customer.html ලින්ක් එක හැදෙන අතර, අගට &action=admin එකතු කර ඇත.
+                // එවිට මේ ලින්ක් එකෙන් Adminට ගියහොත් පමණක් Approve / Non-Approved බටන් පෙනෙනු ඇත.
+                let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${jobId}&action=admin`;
                 let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
                 
                 window.open(whatsappUrl, '_blank');
-                window.location.reload();
+                window.location.reload(); // පේජ් එක රීලෝඩ් කිරීම
             }
         }
     </script>
