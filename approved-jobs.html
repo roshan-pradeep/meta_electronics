@@ -101,6 +101,7 @@
             jobs.forEach(job => {
                 const card = document.createElement('div');
                 card.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px; text-align: left;";
+                
                 card.innerHTML = `
                     <p><strong>Item:</strong> ${job.item}</p>
                     <p><strong>Model:</strong> ${job.model}</p>
@@ -114,9 +115,41 @@
                     <p><strong>Estimated Cost:</strong> Rs. ${job.repair_charges || 0}</p>
                     <p><strong>Description:</strong> ${job.description || 'N/A'}</p>
                     <p style="font-size: 12px; color: #777;">Date: ${new Date(job.created_at).toLocaleString()}</p>
+                    
+                    <!-- Mark as Finished & Notify Customer Button (කොළ පාට බොත්තම) -->
+                    <button onclick="markAsFinished('${job.id}', '${job.customer_phone}', '${job.item}', '${job.model}')" 
+                        style="width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; margin-top: 15px;">
+                        ✓ Mark as Finished & Notify Customer
+                    </button>
                 `;
                 jobsContainer.appendChild(card);
             });
+        }
+
+        // ජොබ් එක Finished ලෙස වෙනස් කර WhatsApp මගින් පාරිභෝගිකයා දැනුවත් කිරීමේ කාර්යය
+        async function markAsFinished(jobId, customerPhone, item, model) {
+            // 1. ඩේටාබේස් එකේ ස්ටේටස් එක 'Finished' ලෙස අප්ඩේට් කිරීම
+            const { error } = await supabaseClient
+                .from('jobs')
+                .update({ status: 'Finished' })
+                .eq('id', jobId);
+
+            if (error) {
+                alert("Error updating status: " + error.message);
+                return;
+            }
+
+            // 2. පාරිභෝගිකයාගේ දුරකථන අංකය පිරිසිදු කර ගැනීම (මුලින් ඇති 0 ඉවත් කිරීම)
+            let cleanPhone = customerPhone.replace(/^0/, '');
+
+            // 3. පාරිභෝගිකයාට යවන WhatsApp පණිවිඩය සකස් කිරීම (සිංහල වැකිය සහ ලින්ක් එක සමඟ)
+            let customerMsg = `ගරු පාරිභෝගිකයාණනි, ඔබගේ ${item} (${model}) අලුත්වැඩියා කටයුතු අවසන්ය. කරුණාකර දින 3ක් ඇතුළත එය රැගෙන යන්න.\n\nස්ථාන තොරතුරු සහ විස්තර මෙතැනින් බලන්න: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${jobId}`;
+            
+            let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
+            
+            // 4. WhatsApp විවෘත කිරීම සහ පිටුව රීෆ්‍රේස් කිරීම
+            window.open(whatsappUrl, '_blank');
+            window.location.reload();
         }
 
         async function viewCustomerJobs(phone) {
@@ -141,12 +174,17 @@
 
             modalContent.innerHTML = '';
             jobs.forEach(job => {
+                let statusColor = 'orange';
+                if (job.status === 'Approved') statusColor = 'blue';
+                else if (job.status === 'Non-Approved') statusColor = 'red';
+                else if (job.status === 'Finished') statusColor = 'green';
+
                 const box = document.createElement('div');
                 box.style.cssText = "background: #f1f1f1; border: 1px solid #ccc; padding: 12px; margin-bottom: 10px; border-radius: 6px;";
                 box.innerHTML = `
                     <p><strong>Item:</strong> ${job.item} (${job.model})</p>
                     <p><strong>Fault:</strong> ${job.fault}</p>
-                    <p><strong>Status:</strong> <span style="color: blue; font-weight: bold;">${job.status}</span></p>
+                    <p><strong>Status:</strong> <span style="color: ${statusColor}; font-weight: bold;">${job.status}</span></p>
                     <p><strong>Cost:</strong> Rs. ${job.repair_charges || 0}</p>
                 `;
                 modalContent.appendChild(box);
