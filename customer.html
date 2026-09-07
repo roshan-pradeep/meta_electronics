@@ -3,137 +3,91 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Electronics - Job Status & Estimate</title>
-    <!-- CSS ස්ටයිල් ෆයිල් එක සහ Supabase ස්ක්‍රිප්ට් එක සම්බන්ධ කිරීම -->
+    <title>Meta Electronics - Customer Estimate & Status</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <style>
-        /* ලයිට් සහ ඩාרק තේම් සඳහා වන වර්ණ සැකසුම් */
-        body.light-mode { background-color: #f4f7f6; color: #333; }
-        body.dark-mode { background-color: #121212; color: #f1f1f1; }
-        body.dark-mode .card, body.dark-mode .container, body.dark-mode div[style*="background"] { background-color: #1e1e1e !important; color: #f1f1f1 !important; border-color: #333 !important; }
-    </style>
 </head>
-<body class="light-mode">
+<body>
 
-    <!-- ප්‍රධාන අන්තර්ගතය අඩංගු කන්ටේනරය -->
-    <div class="container" style="max-width: 600px; margin-top: 30px; text-align: left;">
-        
-        <!-- ඉහළ ශීර්ෂකය (Header): ලාංඡනය සහ මාතෘකාව පමණක් පෙන්වීම -->
-        <div style="display: flex; align-items: center; justify-content: flex-start; margin-bottom: 25px; border-bottom: 1px solid #ddd; padding-bottom: 15px; gap: 12px;">
-            <img src="logo.png" alt="Meta Electronics Logo" style="width: 45px; height: 45px; border-radius: 50%; object-fit: cover;">
-            <h2 style="margin: 0; font-size: 20px;">Job Status & Estimate Details</h2>
-        </div>
-        
-        <!-- පාරිභෝගිකයාගේ ජොබ් සහ එස්ටිමේට් විස්තර ඩේටාබේස් එකෙන් ගෙනවිත් පෙන්වන ප්‍රධාන තැන -->
-        <div id="customer-job-container">
-            <p style="text-align: center; color: #666;">Loading details...</p>
+    <div class="container" style="max-width: 600px; text-align: center;">
+        <h2>Job Estimate & Status</h2>
+        <div id="job-details-container" style="text-align: left; margin-top: 20px;">
+            <p style="text-align: center; color: #666;">Loading job details...</p>
         </div>
     </div>
 
     <script>
-        // Supabase සේවාදායකය සඳහා අවශ්‍ය URL සහ Anon Key සැකසීම
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // HTML හි විස්තර පෙන්වන ඩිව් (div) එක ලබා ගැනීම
-        const customerJobContainer = document.getElementById('customer-job-container');
+        const container = document.getElementById('job-details-container');
+        const urlParams = new URLSearchParams(window.location.search);
+        const customerPhone = urlParams.get('phone');
 
-        // පේජ් එක බ්‍රව්සර් එකේ ලෝඩ් වන විට ක්‍රියාත්මක වන ප්‍රධාන කොටස
         window.addEventListener('DOMContentLoaded', async () => {
-            const savedTheme = localStorage.getItem('meta_theme') || 'light';
-            document.body.className = savedTheme + '-mode';
-
-            // URL එකේ ඇති Job ID එක හෝ Phone එක පරීක්ෂා කිරීම (අප දැන් id එක හරහා යවන බැවින් id එක ලබා ගනී)
-            const urlParams = new URLSearchParams(window.location.search);
-            const jobId = urlParams.get('id');
-            const customerPhone = urlParams.get('phone');
-
-            if (!jobId && !customerPhone) {
-                customerJobContainer.innerHTML = `<p style="color: red; text-align: center;">Invalid link or missing parameters!</p>`;
+            if (!customerPhone) {
+                container.innerHTML = `<p style="color: red; text-align: center;">Invalid link or phone number not found!</p>`;
                 return;
             }
+            await fetchCustomerJobs(customerPhone);
+        });
 
-            let query = supabaseClient.from('jobs').select('*');
-            
-            if (jobId) {
-                query = query.eq('id', jobId);
-            } else {
-                query = query.eq('customer_phone', customerPhone).order('created_at', { ascending: false });
-            }
-
-            const { data: jobs, error } = await query;
+        async function fetchCustomerJobs(phone) {
+            const { data: jobs, error } = await supabaseClient
+                .from('jobs')
+                .select('*')
+                .eq('customer_phone', phone)
+                .order('created_at', { ascending: false });
 
             if (error) {
-                customerJobContainer.innerHTML = `<p style="color: red; text-align: center;">Error loading details: ${error.message}</p>`;
+                container.innerHTML = `<p style="color: red; text-align: center;">Error loading jobs: ${error.message}</p>`;
                 return;
             }
 
-            if (!jobs || jobs.length === 0) {
-                customerJobContainer.innerHTML = `<p style="text-align: center; color: #666;">No jobs found.</p>`;
+            if (jobs.length === 0) {
+                container.innerHTML = `<p style="text-align: center; color: #666;">No jobs found for this phone number.</p>`;
                 return;
             }
 
-            customerJobContainer.innerHTML = '';
-            
+            container.innerHTML = '';
             jobs.forEach(job => {
-                const jobCard = document.createElement('div');
-                jobCard.className = 'card';
-                jobCard.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px;";
-                
-                // ජොබ් එකේ තත්ත්වය (Status) අනුව වර්ණය පෙන්වීම
                 let statusColor = 'orange';
                 if (job.status === 'Approved') statusColor = 'blue';
                 else if (job.status === 'Non-Approved') statusColor = 'red';
                 else if (job.status === 'Finished') statusColor = 'green';
 
-                let cardContent = `
-                    <p><strong>Item:</strong> ${job.item || 'N/A'}</p>
-                    <p><strong>Model:</strong> ${job.model || 'N/A'}</p>
-                    <p><strong>Serial Number:</strong> ${job.serial_number || 'N/A'}</p>
-                    <p><strong>Fault:</strong> ${job.fault || 'N/A'}</p>
-                    <p><strong>Status:</strong> <span style="color: ${statusColor}; font-weight: bold;">${job.status}</span></p>
-                    <p style="font-size: 12px; color: #777;">Registered Date: ${new Date(job.created_at).toLocaleString()}</p>
-                `;
-
-                // Estimate එකක් හෝ Charges ඇත්නම් සහ වැඩේ තවමත් Pending නම් හෝ අනුමත කිරීමට බලාපොරොත්තු වේ නම්
-                cardContent += `
-                    <hr style="margin: 15px 0; border: 0; border-top: 1px solid #ddd;">
-                    <div style="background: #fff3cd; padding: 15px; border-radius: 6px; border: 1px solid #ffeeba;">
-                        <h4 style="margin-top: 0; color: #856404;">Repair Estimate Details</h4>
-                        <p><strong>Estimated Cost:</strong> <span style="color: #28a745; font-size: 16px; font-weight: bold;">Rs. ${job.repair_charges || 0}</span></p>
-                        <p><strong>Repair Description / Parts:</strong> ${job.description || 'No description provided.'}</p>
-                `;
-
-                // පාරිභෝගිකයාට Approve හෝ Non Approve කිරීමට බොත්තම් පෙන්වීම (Pending හෝ වෙනත් අවස්ථාවක වුවද වෙනස් කරගත හැක)
-                cardContent += `
-                        <div style="margin-top: 20px; display: flex; gap: 10px;">
-                            <button onclick="updateStatus('${job.id}', 'Approved')" style="flex: 1; background-color: #28a745; color: white; border: none; padding: 12px; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer;">Approve</button>
-                            <button onclick="updateStatus('${job.id}', 'Non-Approved')" style="flex: 1; background-color: #dc3545; color: white; border: none; padding: 12px; border-radius: 5px; font-size: 15px; font-weight: bold; cursor: pointer;">Non Approve</button>
-                        </div>
-                    </div>
-                `;
-
-                // ජොබ් එක Finished වී ඇත්නම් ෆොටෝ එක පෙන්වීම
-                if (job.status === 'Finished' && job.photo_url) {
-                    cardContent += `
-                        <div style="margin-top: 15px; background: #eef9ee; padding: 15px; border-radius: 6px; border: 1px solid #c3e6cb;">
-                            <p style="margin-top: 0;"><strong>Repair Photo:</strong></p>
-                            <a href="${job.photo_url}" target="_blank">
-                                <img src="${job.photo_url}" alt="Repair Photo" style="max-width: 100%; height: auto; border-radius: 4px; border: 1px solid #ccc; margin-top: 5px;">
-                            </a>
+                const jobCard = document.createElement('div');
+                jobCard.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 8px;";
+                
+                // ස්ටේටස් එක Pending නම් පමණක් Approve / Non-Approved බොත්තම් පෙන්වීම
+                let actionButtonsHTML = '';
+                if (job.status === 'Pending') {
+                    actionButtonsHTML = `
+                        <div id="action-buttons-${job.id}" style="margin-top: 15px; display: flex; gap: 10px;">
+                            <button onclick="updateJobStatus('${job.id}', 'Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">Approve</button>
+                            <button onclick="updateJobStatus('${job.id}', 'Non-Approved')" style="flex: 1; background: #dc3545; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">Non-Approved</button>
                         </div>
                     `;
                 }
 
-                jobCard.innerHTML = cardContent;
-                customerJobContainer.appendChild(jobCard);
+                jobCard.innerHTML = `
+                    <p><strong>Item:</strong> ${job.item} (${job.model})</p>
+                    <p><strong>Serial Number:</strong> ${job.serial_number}</p>
+                    <p><strong>Fault:</strong> ${job.fault}</p>
+                    <p><strong>Status:</strong> <span id="status-text-${job.id}" style="color: ${statusColor}; font-weight: bold;">${job.status}</span></p>
+                    <p><strong>Advance Amount:</strong> Rs. ${job.advance_amount || 0}</p>
+                    ${job.repair_charges ? `<p><strong>Estimated Cost:</strong> Rs. ${job.repair_charges}</p>` : ''}
+                    ${job.description ? `<p><strong>Repair Description:</strong> ${job.description}</p>` : ''}
+                    
+                    ${actionButtonsHTML}
+                `;
+                container.appendChild(jobCard);
             });
-        });
+        }
 
-        // කස්ටමර් Approve හෝ Non Approve කළ විට ක්‍රියාත්මක වන ෆන්ක්ෂන් එක
-        async function updateStatus(jobId, newStatus) {
+        // ස්ටේටස් එක වෙනස් කර බොත්තම් ක්ෂණිකව අයින් කිරීම
+        async function updateJobStatus(jobId, newStatus) {
             const { error } = await supabaseClient
                 .from('jobs')
                 .update({ status: newStatus })
@@ -142,12 +96,20 @@
             if (error) {
                 alert("Error updating status: " + error.message);
             } else {
-                if (newStatus === 'Approved') {
-                    alert("Successfully Approved! Admin has been notified.");
-                } else {
-                    alert("Status updated to Non-Approved.");
+                alert(`Job status updated to ${newStatus} successfully!`);
+                
+                // බොත්තම් කන්ටේනර් එක ස්ක්‍රීන් එකෙන් ඉවත් කිරීම (අයින් වීම)
+                const actionDiv = document.getElementById(`action-buttons-${jobId}`);
+                if (actionDiv) {
+                    actionDiv.remove();
                 }
-                location.reload(); // පේජ් එක රිෆ්‍රෙෂ් කර ස්ටේටස් වෙනස්වීම පෙන්වීම
+
+                // ස්ටේටස් ටෙක්ස්ට් එක වෙනස් කිරීම
+                const statusSpan = document.getElementById(`status-text-${jobId}`);
+                if (statusSpan) {
+                    statusSpan.textContent = newStatus;
+                    statusSpan.style.color = newStatus === 'Approved' ? 'blue' : 'red';
+                }
             }
         }
     </script>

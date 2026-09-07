@@ -235,8 +235,8 @@
                 alert("Estimate saved successfully! Redirecting to WhatsApp...");
 
                 let cleanPhone = customerPhone.replace(/^0/, '');
-                // කස්ටමර්ට යවන WhatsApp මැසේජ් එක (customer.html වෙත යොමු වන id සහිත ලින්ක් එක සමඟ)
-                let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${jobId}`;
+                // WhatsApp මැසේජ් එක ඇතුළට customer.html?phone= අංකය එකතු කර ඇත
+                let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: https://roshan-pradeep.github.io/meta_electronics/customer.html?phone=${customerPhone}`;
                 let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
                 
                 window.open(whatsappUrl, '_blank');
