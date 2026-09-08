@@ -34,7 +34,6 @@
         
         // පිටුව ලෝඩ් වූ වහාම URL එක පරීක්ෂා කර Heading එක වෙනස් කිරීම සහ ජොබ් විස්තර ලබා ගැනීම
         window.addEventListener('DOMContentLoaded', async () => {
-            // URL එකේ action=register නම් Heading එක "Register Job Details" ලෙස වෙනස් කරයි
             if (actionType === 'register') {
                 headingElement.textContent = "Register Job Details";
             } else {
@@ -72,8 +71,10 @@
             
             let actionButtonsHTML = '';
             
-            // **තීරණය:** action=register නම් බටන් පෙන්වන්නේ නැත (Register විස්තර පමණි). 
-            // නමුත් action=register නැතිනම් සහ ස්ටේටස් එක 'Pending' නම් පමණක් Approve/Non-Approved බටන් පෙන්වයි.
+            // **විශේෂ වෙනස්කම:** 
+            // 1. action=register නම් කිසිම විටක බටන් පෙන්වන්නේ නැත.
+            // 2. ස්ටේටස් එක 'Pending' නම් පමණක් Approve / Non-Approved බටන් පෙන්වයි.
+            // 3. ස්ටේටස් එක දැනටමත් 'Approved' හෝ 'Non-Approved' හෝ වෙනත් එකක් වී ඇත්නම්, කස්ටමර් කුමන තීරණයක් ගත්තේද යන්න පණිවිඩයක් ලෙස පෙන්වයි (නැවත බටන් නොපෙන්වයි).
             if (actionType !== 'register') {
                 if (job.status === 'Pending') {
                     actionButtonsHTML = `
@@ -83,10 +84,9 @@
                         </div>
                     `;
                 } else {
-                    // වෙනත් status එකක නම් දැනටමත් ප්‍රතිචාර දක්වා ඇති බව පෙන්වයි
                     actionButtonsHTML = `
                         <div id="action-buttons-wrapper" style="margin-top: 20px; background: #e9ecef; padding: 12px; border-radius: 4px; text-align: center;">
-                            <p style="margin: 0; color: #495057; font-size: 14px; font-weight: bold;">✓ This estimate has been already responded (${job.status}).</p>
+                            <p style="margin: 0; color: #495057; font-size: 14px; font-weight: bold;">✓ You have already responded to this estimate (${job.status}).</p>
                         </div>
                     `;
                 }
@@ -126,7 +126,7 @@
                 console.log("Update success:", data);
                 alert(`Job status updated to ${newStatus} successfully!`);
                 
-                // බටන් ඉවත් කර සාර්ථක පණිවිඩයක් පෙන්වීම
+                // බටන් වෙනුවට කස්ටමර් තෝරාගත් තීරණය පෙන්වීම
                 const btnContainer = document.getElementById('btn-container');
                 if (btnContainer) {
                     btnContainer.innerHTML = `
