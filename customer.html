@@ -24,8 +24,7 @@
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         
-        // **විශේෂ වෙනස්කම:** WhatsApp ඇප් එකේ ඉන්-ඇප් බ්‍රව්සරවල (In-App WebView) localStorage බ්ලොක් වීම 
-        // නිසා ඩේටා අප්ඩේට් නොවී නතර වීම වැළැක්වීමට persistSession: false සහ අනෙකුත් සැකසුම් යොදා ඇත.
+        // WhatsApp ඉන්-ඇප් බ්‍රව්සර්වල localStorage බ්ලොක් වීම වැළැක්වීමට persistSession: false යොදා ඇත.
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: {
                 persistSession: false,
@@ -56,7 +55,7 @@
             await fetchSpecificJob(jobId);
         });
 
-        // ඩේටාබේස් එකෙන් අදාළ ජොබ් එක ලබා ගැනීම
+        // ඩේටාබේස් එකෙන් අදාළ ජොබ් එක ලබා ගැනීම (কැෂින් වීම වැළැක්වීමට නවතම දත්ත ලබා ගනී)
         async function fetchSpecificJob(id) {
             const { data: job, error } = await supabaseClient
                 .from('jobs')
@@ -80,12 +79,12 @@
             
             let actionButtonsHTML = '';
             
-            // **විශේෂ වෙනස්කම:** 
+            // **ප්‍රධාන නිවැරදි කිරීම:** 
             // 1. action=register නම් කිසිම විටක බටන් පෙන්වන්නේ නැත.
-            // 2. ස්ටේටස් එක 'Pending' නම් පමණක් Approve / Non-Approved බටන් පෙන්වයි.
-            // 3. ස්ටේටස් එක දැනටමත් 'Approved' හෝ 'Non-Approved' හෝ වෙනත් එකක් වී ඇත්නම්, කස්ටමර් කුමන තීරණයක් ගත්තේද යන්න පණිවිඩයක් ලෙස පෙන්වයි (නැවත බටන් නොපෙන්වයි).
+            // 2. ජොබ් එකේ ස්ටේටස් එක හරියටම 'Pending' නම් පමණක් (සැකයකින් තොරව) Approve / Non-Approved බටන් පෙන්වයි.
+            // 3. ස්ටේටස් එක 'Pending' නොවේ නම් (දැනටමත් Approve හෝ Non-Approved වී ඇත්නම්), කිසිම අවස්ථාවක බටන් නොපෙන්වා, කස්ටමර් කලින් දුන් තීරණය පෙන්වන පණිවිඩය පමණක් පෙන්වයි.
             if (actionType !== 'register') {
-                if (job.status === 'Pending') {
+                if (job.status && job.status.trim().toLowerCase() === 'pending') {
                     actionButtonsHTML = `
                         <div id="action-buttons-wrapper" style="margin-top: 20px; display: flex; gap: 10px;">
                             <button onclick="updateJobStatus('${job.id}', 'Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Approve</button>
@@ -135,7 +134,7 @@
                 console.log("Update success:", data);
                 alert(`Job status updated to ${newStatus} successfully!`);
                 
-                // බටන් වෙනුවට කස්ටමර් තෝරාගත් තීරණය පෙන්වීම
+                // බටන් වෙනුවට වහාම කස්ටමර් තෝරාගත් තීරණය පෙන්වීම
                 const btnContainer = document.getElementById('btn-container');
                 if (btnContainer) {
                     btnContainer.innerHTML = `
