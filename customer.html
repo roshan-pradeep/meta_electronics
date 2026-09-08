@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meta Electronics - Customer Estimate & Status</title>
+    <!-- CSS ස්ටයිල් ෆයිල් එක සම්බන්ධ කිරීම -->
     <link rel="stylesheet" href="style.css">
+    <!-- Supabase JavaScript Library එක CDN එක හරහා ඇතුළත් කිරීම -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -17,6 +19,7 @@
     </div>
 
     <script>
+        // Supabase සම්බන්ධ වීමට අවශ්‍ය Credentials
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -25,9 +28,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const jobId = urlParams.get('id');
         
-        // URL එකේ ?action=admin තියෙනවද බලයි (Admin පේජ් එකෙන් එනවා නම් පමණක් බටන් පෙන්වීමට)
-        const isAdminAction = urlParams.get('action') === 'admin';
-
+        // පිටුව ලෝඩ් වූ වහාම අදාළ ජොබ් විස්තර ලබා ගැනීම
         window.addEventListener('DOMContentLoaded', async () => {
             if (!jobId) {
                 container.innerHTML = `<p style="color: red; text-align: center;">Invalid link or Job ID not found!</p>`;
@@ -36,6 +37,7 @@
             await fetchSpecificJob(jobId);
         });
 
+        // ඩේටාබේස් එකෙන් අදාළ ජොබ් එක ලබා ගැනීම
         async function fetchSpecificJob(id) {
             const { data: job, error } = await supabaseClient
                 .from('jobs')
@@ -59,26 +61,19 @@
             
             let actionButtonsHTML = '';
             
-            // Pending වී ඇතත්, Admin ලින්ක් එකෙන් (Pending Jobs පේජ් එකෙන්) පැමිණි නම් පමණක් බටන් පෙන්වයි
-            if (job.status === 'Pending' && isAdminAction) {
+            // **වෙනස්කම මෙතනයි:** ජොබ් එකේ ස්ටේටස් එක 'Pending' නම් කස්ටමර්ට හෝ ඕනෑම කෙනෙකුට ලින්ක් එකෙන් ආවම බටන් පෙනෙන සේ සකසා ඇත
+            if (job.status === 'Pending') {
                 actionButtonsHTML = `
                     <div id="action-buttons-wrapper" style="margin-top: 20px; display: flex; gap: 10px;">
                         <button onclick="updateJobStatus('${job.id}', 'Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Approve</button>
                         <button onclick="updateJobStatus('${job.id}', 'Non-Approved')" style="flex: 1; background: #dc3545; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Non-Approved</button>
                     </div>
                 `;
-            } else if (job.status !== 'Pending') {
-                // වෙනත් status එකක නම් ප්‍රතිචාර දැක්වූ බව පෙන්වයි
+            } else {
+                // වෙනත් status එකක නම් (Approved හෝ Non-Approved හෝ Finished) දැනටමත් ප්‍රතිචාර දක්වා ඇති බව පෙන්වයි
                 actionButtonsHTML = `
                     <div id="action-buttons-wrapper" style="margin-top: 20px; background: #e9ecef; padding: 12px; border-radius: 4px; text-align: center;">
                         <p style="margin: 0; color: #495057; font-size: 14px; font-weight: bold;">✓ This estimate has been already responded (${job.status}).</p>
-                    </div>
-                `;
-            } else {
-                // සාමාන්‍ය කස්ටමර්ට ලින්ක් එකෙන් ආවොත් බටන් නොපෙන්වා දැනුම්දීමක් පෙන්වයි
-                actionButtonsHTML = `
-                    <div id="action-buttons-wrapper" style="margin-top: 20px; background: #fff3cd; padding: 12px; border-radius: 4px; text-align: center; border: 1px solid #ffeeba;">
-                        <p style="margin: 0; color: #856404; font-size: 14px; font-weight: bold;">ℹ️ Status: Pending Admin/Customer confirmation.</p>
                     </div>
                 `;
             }
@@ -100,6 +95,7 @@
             container.appendChild(jobCard);
         }
 
+        // පාරිභෝගිකයා Approve හෝ Non-Approved කළ විට ඩේටාබේස් එක අප්ඩේට් කිරීම
         async function updateJobStatus(id, newStatus) {
             console.log("Updating job:", id, "to status:", newStatus);
 
@@ -116,6 +112,7 @@
                 console.log("Update success:", data);
                 alert(`Job status updated to ${newStatus} successfully!`);
                 
+                // බටන් ඉවත් කර සාර්ථක පණිවිඩයක් පෙන්වීම
                 const btnContainer = document.getElementById('btn-container');
                 if (btnContainer) {
                     btnContainer.innerHTML = `
@@ -125,6 +122,7 @@
                     `;
                 }
 
+                // ස්ටේටස් පාඨය වර්ණය සහ නම වෙනස් කිරීම
                 const statusSpan = document.getElementById('status-text');
                 if (statusSpan) {
                     statusSpan.textContent = newStatus;
