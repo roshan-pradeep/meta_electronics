@@ -12,7 +12,8 @@
 <body>
 
     <div class="container" style="max-width: 600px; text-align: center;">
-        <h2>Job Estimate & Status</h2>
+        <!-- Heading එක ජොබ් එක රෙජිස්ටර් කළාද නැත්නම් ඇස්ටිමේට් එකක්ද යන්න අනුව වෙනස් වේ -->
+        <h2 id="page-heading">Job Estimate & Status</h2>
         <div id="job-details-container" style="text-align: left; margin-top: 20px;">
             <p style="text-align: center; color: #666;">Loading job details...</p>
         </div>
@@ -25,11 +26,21 @@
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const container = document.getElementById('job-details-container');
+        const headingElement = document.getElementById('page-heading');
+        
         const urlParams = new URLSearchParams(window.location.search);
         const jobId = urlParams.get('id');
+        const actionType = urlParams.get('action'); // action එක පරීක්ෂා කිරීම සඳහා
         
-        // පිටුව ලෝඩ් වූ වහාම අදාළ ජොබ් විස්තර ලබා ගැනීම
+        // පිටුව ලෝඩ් වූ වහාම URL එක පරීක්ෂා කර Heading එක වෙනස් කිරීම සහ ජොබ් විස්තර ලබා ගැනීම
         window.addEventListener('DOMContentLoaded', async () => {
+            // URL එකේ action=register නම් Heading එක "Register Job Details" ලෙස වෙනස් කරයි
+            if (actionType === 'register') {
+                headingElement.textContent = "Register Job Details";
+            } else {
+                headingElement.textContent = "Job Estimate & Status";
+            }
+
             if (!jobId) {
                 container.innerHTML = `<p style="color: red; text-align: center;">Invalid link or Job ID not found!</p>`;
                 return;
@@ -61,21 +72,24 @@
             
             let actionButtonsHTML = '';
             
-            // **වෙනස්කම මෙතනයි:** ජොබ් එකේ ස්ටේටස් එක 'Pending' නම් කස්ටමර්ට හෝ ඕනෑම කෙනෙකුට ලින්ක් එකෙන් ආවම බටන් පෙනෙන සේ සකසා ඇත
-            if (job.status === 'Pending') {
-                actionButtonsHTML = `
-                    <div id="action-buttons-wrapper" style="margin-top: 20px; display: flex; gap: 10px;">
-                        <button onclick="updateJobStatus('${job.id}', 'Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Approve</button>
-                        <button onclick="updateJobStatus('${job.id}', 'Non-Approved')" style="flex: 1; background: #dc3545; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Non-Approved</button>
-                    </div>
-                `;
-            } else {
-                // වෙනත් status එකක නම් (Approved හෝ Non-Approved හෝ Finished) දැනටමත් ප්‍රතිචාර දක්වා ඇති බව පෙන්වයි
-                actionButtonsHTML = `
-                    <div id="action-buttons-wrapper" style="margin-top: 20px; background: #e9ecef; padding: 12px; border-radius: 4px; text-align: center;">
-                        <p style="margin: 0; color: #495057; font-size: 14px; font-weight: bold;">✓ This estimate has been already responded (${job.status}).</p>
-                    </div>
-                `;
+            // **තීරණය:** action=register නම් බටන් පෙන්වන්නේ නැත (Register විස්තර පමණි). 
+            // නමුත් action=register නැතිනම් සහ ස්ටේටස් එක 'Pending' නම් පමණක් Approve/Non-Approved බටන් පෙන්වයි.
+            if (actionType !== 'register') {
+                if (job.status === 'Pending') {
+                    actionButtonsHTML = `
+                        <div id="action-buttons-wrapper" style="margin-top: 20px; display: flex; gap: 10px;">
+                            <button onclick="updateJobStatus('${job.id}', 'Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Approve</button>
+                            <button onclick="updateJobStatus('${job.id}', 'Non-Approved')" style="flex: 1; background: #dc3545; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Non-Approved</button>
+                        </div>
+                    `;
+                } else {
+                    // වෙනත් status එකක නම් දැනටමත් ප්‍රතිචාර දක්වා ඇති බව පෙන්වයි
+                    actionButtonsHTML = `
+                        <div id="action-buttons-wrapper" style="margin-top: 20px; background: #e9ecef; padding: 12px; border-radius: 4px; text-align: center;">
+                            <p style="margin: 0; color: #495057; font-size: 14px; font-weight: bold;">✓ This estimate has been already responded (${job.status}).</p>
+                        </div>
+                    `;
+                }
             }
 
             jobCard.innerHTML = `

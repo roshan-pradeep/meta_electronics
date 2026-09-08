@@ -235,9 +235,9 @@
 
                 const insertedJob = data[0];
 
-                // **වෙනස්කම මෙතනයි:** අලුතින් ජොබ් එකක් රෙජිස්ටර් කළ විට WhatsApp හරහා යවන ලින්ක් එකේ 
-                // කිසිදු 'action' එකක් (Admin Action එකක්) නැති නිසා, කස්ටමර්ට බටන් නොපෙන්වා විස්තර සහ ස්ටේටස් එක පමණක් පෙන්වයි.
-                let customerMsg = `Hello, your job for ${item} (${model}) has been registered at Meta Electronics. Track status here: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${insertedJob.id}`;
+                // **වෙනස්කම මෙතනයි:** අලුතින් ජොබ් එකක් රෙජිස්ටර් කළ විට WhatsApp හරහා යවන ලින්ක් එකට 
+                // '&action=register' එකතු කර ඇත. එයින් පාරිභෝගික පිටුව හඳුනා ගනී.
+                let customerMsg = `Hello, your job for ${item} (${model}) has been registered at Meta Electronics. Track status here: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${insertedJob.id}&action=register`;
                 let whatsappUrl = `https://wa.me/94${customerPhone.replace(/^0/, '')}?text=${encodeURIComponent(customerMsg)}`;
                 
                 setTimeout(() => {
