@@ -64,7 +64,7 @@
                 return;
             }
 
-            if (jobs.length === 0) {
+            if (!jobs || jobs.length === 0) {
                 jobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No non-approved jobs found.</p>`;
                 phoneFilterContainer.innerHTML = '';
                 return;

@@ -20,7 +20,7 @@
 
         <!-- ජොබ්ස් ලැයිස්තුව -->
         <div id="approved-jobs-container">
-            <p style="text-align: center; color: #666; font-weight: bold;">Please click a phone number button above to view approved jobs.</p>
+            <p style="text-align: center; color: #666; font-weight: bold;">Loading approved jobs...</p>
         </div>
     </div>
 
@@ -58,7 +58,7 @@
                 return;
             }
 
-            if (jobs.length === 0) {
+            if (!jobs || jobs.length === 0) {
                 jobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No approved jobs found.</p>`;
                 phoneFilterContainer.innerHTML = '';
                 return;
@@ -66,7 +66,7 @@
 
             allApprovedJobs = jobs;
             createPhoneFilterButtons(allApprovedJobs);
-            jobsContainer.innerHTML = `<p style="text-align: center; color: #666; font-weight: bold; background: #fff; padding: 20px; border: 1px dashed #ccc; border-radius: 8px;">👈 Please click a phone number button above to view approved jobs.</p>`;
+            displayJobs(allApprovedJobs);
         }
 
         function createPhoneFilterButtons(jobs) {
@@ -116,7 +116,6 @@
                     <p><strong>Description:</strong> ${job.description || 'N/A'}</p>
                     <p style="font-size: 12px; color: #777;">Date: ${new Date(job.created_at).toLocaleString()}</p>
                     
-                    <!-- Mark as Finished & Notify Customer Button (කොළ පාට බොත්තම) -->
                     <button onclick="markAsFinished('${job.id}', '${job.customer_phone}', '${job.item}', '${job.model}')" 
                         style="width: 100%; background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px; margin-top: 15px;">
                         ✓ Mark as Finished & Notify Customer
@@ -126,9 +125,7 @@
             });
         }
 
-        // ජොබ් එක Finished ලෙස වෙනස් කර WhatsApp මගින් පාරිභෝගිකයා දැනුවත් කිරීමේ කාර්යය
         async function markAsFinished(jobId, customerPhone, item, model) {
-            // 1. ඩේටාබේස් එකේ ස්ටේටස් එක 'Finished' ලෙස අප්ඩේට් කිරීම
             const { error } = await supabaseClient
                 .from('jobs')
                 .update({ status: 'Finished' })
@@ -139,15 +136,11 @@
                 return;
             }
 
-            // 2. පාරිභෝගිකයාගේ දුරකථන අංකය පිරිසිදු කර ගැනීම (මුලින් ඇති 0 ඉවත් කිරීම)
             let cleanPhone = customerPhone.replace(/^0/, '');
-
-            // 3. පාරිභෝගිකයාට යවන WhatsApp පණිවිඩය සකස් කිරීම (සිංහල වැකිය සහ ලින්ක් එක සමඟ)
             let customerMsg = `ගරු පාරිභෝගිකයාණනි, ඔබගේ ${item} (${model}) අලුත්වැඩියා කටයුතු අවසන්ය. කරුණාකර දින 3ක් ඇතුළත එය රැගෙන යන්න.\n\nස්ථාන තොරතුරු සහ විස්තර මෙතැනින් බලන්න: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${jobId}`;
             
             let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
             
-            // 4. WhatsApp විවෘත කිරීම සහ පිටුව රීෆ්‍රේස් කිරීම
             window.open(whatsappUrl, '_blank');
             window.location.reload();
         }
