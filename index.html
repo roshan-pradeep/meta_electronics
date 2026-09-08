@@ -56,10 +56,10 @@
                 <button id="logout-btn" class="btn logout-btn" style="width: auto; padding: 6px 12px;">Logout</button>
             </div>
 
-            <!-- ඩෑෂ්බෝඩ් එකේ ප්‍රධාන මෙහෙයුම් බොත්තම් ජාලය (ඔබ ඉල්ලා ඇති නියමිත පිළිවෙළට සකසා ඇත) -->
+            <!-- ඩෑෂ්බෝඩ් එකේ ප්‍රධාන මෙහෙයුම් බොත්තම් ජාලය -->
             <div class="button-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;">
                 
-                <!-- 1. Add Job (මෙය ක්ලික් කළ විට පෝරමය පෙන්වයි) -->
+                <!-- 1. Add Job -->
                 <button class="dash-btn" onclick="showSection('add-job-section')">Add Job</button>
                 
                 <!-- 2. Pending Jobs -->
@@ -124,7 +124,7 @@
     </div>
 
     <script>
-        // Supabase සේවාදායකය සඳහා අවශ්‍ය URL සහ Anon Key නිවැරදිව සැකසීම
+        // Supabase සේවාදායකය සඳහා අවශ්‍ය URL සහ Anon Key සැකසීම
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -143,20 +143,18 @@
         window.addEventListener('DOMContentLoaded', async () => {
             const { data: { session } } = await supabaseClient.auth.getSession();
             if (session) {
-                // පරිශීලකයා ලොග් වී ඇත්නම් ලොගින් පේජ් එක සඟවා ඩෑෂ්බෝඩ් එක පෙන්වීම
                 loginSection.classList.add('hidden');
                 dashboardSection.classList.remove('hidden');
             }
         });
 
-        // Admin Login ක්‍රියාවලිය හැසිරවීම (ස්‍ථිර ඊමේල් එකක් හරහා ලොග් වී, දුරකථන අංකය profiles ටේබල් එකෙන් පරීක්ෂා කිරීම)
+        // Admin Login ක්‍රියාවලිය හැසිරවීම
         loginForm.addEventListener('submit', async (e) => {
-            e.preventDefault(); // ෆෝම් එක සාමාන්‍ය ආකාරයට රීලෝඩ් වීම වැළැක්වීම
+            e.preventDefault();
             const phoneInput = document.getElementById('phone').value.trim();
             const password = document.getElementById('password').value;
-            errorMessage.textContent = ''; // පැරණි දෝෂ පණිවිඩ මකා දැමීම
+            errorMessage.textContent = '';
 
-            // 1. මුලින්ම පද්ධතියේ ප්‍රධාන ස්ථිර ඊමේල් එක භාවිතයෙන් Supabase Auth හරහා ලොග් වීම (Admin එකවුන්ට් එක සඳහා)
             const adminEmail = "admin@meta.lk"; 
             const { data: authData, error: authError } = await supabaseClient.auth.signInWithPassword({
                 email: adminEmail,
@@ -168,40 +166,35 @@
                 return;
             }
 
-            // 2. ලොග් වූ යූසර්ගේ ID එකට අදාළ දුරකථන අංකය පමණක් profiles ටේබල් එකෙන් ලබා ගැනීම
             const { data: profileData, error: profileError } = await supabaseClient
                 .from('profiles')
                 .select('phone')
                 .eq('id', authData.user.id)
                 .single();
 
-            // ටේබල් එකේ අංකයක් නැත්නම් හෝ ඇතුළත් කළ අංකය ටේබල් එකේ ඇති අංකයට සමාන නැත්නම්
             if (profileError || !profileData || profileData.phone !== phoneInput) {
                 errorMessage.textContent = "Login Failed: Incorrect Phone Number!";
-                await supabaseClient.auth.signOut(); // වැරදි නම් ලොග් වීම අත්හිටුවා නැවත ලොග්අවුට් කිරීම
+                await supabaseClient.auth.signOut();
                 return;
             }
 
-            // සියල්ල සාර්ථක නම් ඩෑෂ්බෝඩ් එක පෙන්වීම
             loginSection.classList.add('hidden');
             dashboardSection.classList.remove('hidden');
         });
 
         // පද්ධතියෙන් ඉවත් වීමේ (Logout) ක්‍රියාවලිය
         logoutBtn.addEventListener('click', async () => {
-            await supabaseClient.auth.signOut(); // Supabase ගිණුමෙන් අයින් වීම
+            await supabaseClient.auth.signOut();
             dashboardSection.classList.add('hidden');
             addJobSection.classList.add('hidden');
-            loginSection.classList.remove('hidden'); // ලොගින් පේජ් එක පෙන්වීම
-            loginForm.reset(); // ෆෝම් එක හිස් කිරීම
+            loginSection.classList.remove('hidden');
+            loginForm.reset();
         });
 
-        // ඩෑෂ්බෝඩ් එක ඇතුළේ විවිධ කොටස් මාරු කර පෙන්වීමේ කාර්යය (Show/Hide කිරීම)
+        // ඩෑෂ්බෝඩ් එක ඇතුළේ විවිධ කොටස් මාරු කර පෙන්වීමේ කාර්යය
         function showSection(sectionId) {
             dashboardSection.classList.add('hidden');
             addJobSection.classList.add('hidden');
-            
-            // අවශ්‍ය කරන කොටස മാത്രം පෙන්වීම
             document.getElementById(sectionId).classList.remove('hidden');
         }
 
@@ -210,14 +203,13 @@
             e.preventDefault();
             jobMsg.textContent = '';
 
-            // ෆෝම් එකෙන් දත්ත ලබා ගැනීම
             const item = document.getElementById('item').value;
             const model = document.getElementById('model').value;
             const serialNumber = document.getElementById('serial_number').value;
             const fault = document.getElementById('fault').value;
             const customerPhone = document.getElementById('customer_phone').value.trim();
 
-            // jobs ටේබල් එකට දත්ත ඇතුළත් කර, අලුතින් හැදුණු id එක ලබා ගැනීමට .select() එකතු කිරීම
+            // jobs ටේබල් එකට දත්ත ඇතුළත් කර id එක ලබා ගැනීම
             const { data, error } = await supabaseClient
                 .from('jobs')
                 .insert([
@@ -227,50 +219,47 @@
                         serial_number: serialNumber, 
                         fault: fault, 
                         customer_phone: customerPhone, 
-                        status: 'Pending' // අලුතින් දමන ජොබ් එකක් මූලිකව 'Pending' ලෙස සටහන් වේ
+                        status: 'Pending' 
                     }
                 ])
-                .select(); // අත්‍යවශ්‍යයි: අලුතින් හැදුණු රෝ (row) එකේ දත්ත (id එක සමඟ) ආපහු ලබා ගැනීමට
+                .select(); 
 
-            // දෝෂයක් ඇත්නම්
             if (error) {
                 jobMsg.style.color = 'red';
                 jobMsg.textContent = "Error: Failed to register job!";
                 console.error(error);
             } else {
-                // සාර්ථක නම්
                 jobMsg.style.color = 'green';
                 jobMsg.textContent = "Job Registered Successfully!";
-                addJobForm.reset(); // ෆෝම් එක හිස් කිරීම
+                addJobForm.reset(); 
 
-                // .select() මඟින් ලැබුණු අලුත්ම ජොබ් එකේ දත්ත වලින් id එක ලබා ගැනීම
                 const insertedJob = data[0];
 
-                // පාරිභෝගිකයාගේ WhatsApp අංකයට ස්වයංක්‍රීයව අදාළ Job ID එක සහිත GitHub Pages ලින්ක් එක යැවීම
+                // **වෙනස්කම මෙතනයි:** අලුතින් ජොබ් එකක් රෙජිස්ටර් කළ විට WhatsApp හරහා යවන ලින්ක් එකේ 
+                // කිසිදු 'action' එකක් (Admin Action එකක්) නැති නිසා, කස්ටමර්ට බටන් නොපෙන්වා විස්තර සහ ස්ටේටස් එක පමණක් පෙන්වයි.
                 let customerMsg = `Hello, your job for ${item} (${model}) has been registered at Meta Electronics. Track status here: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${insertedJob.id}`;
                 let whatsappUrl = `https://wa.me/94${customerPhone.replace(/^0/, '')}?text=${encodeURIComponent(customerMsg)}`;
                 
-                // තත්පර 1කින් ස්වයංක්‍රීයව WhatsApp වෙත යොමු කිරීම
                 setTimeout(() => {
                     window.open(whatsappUrl, '_blank');
                 }, 1000);
             }
         });
 
-        // පිටු මාරු කිරීම සඳහා සකස් කළ කාර්යය (ඔබ ඉල්ලා ඇති අලුත් ෆයිල් ලින්ක් සමඟ)
+        // පිටු මාරු කිරීම සඳහා සකස් කළ කාර්යය
         function openPage(pageName) {
             if (pageName === 'pending-jobs') {
-                window.location.href = 'pending-jobs.html'; // Pending Jobs පේජ් එකට යාමට
+                window.location.href = 'pending-jobs.html';
             } else if (pageName === 'approved-jobs') {
-                window.location.href = 'approved-jobs.html'; // Approved Jobs පේජ් එකට යාමට
+                window.location.href = 'approved-jobs.html';
             } else if (pageName === 'non-approved-jobs') {
-                window.location.href = 'non-approved-jobs.html'; // Non Approved Jobs පේජ් එකට යාමට
+                window.location.href = 'non-approved-jobs.html';
             } else if (pageName === 'finish-jobs') {
-                window.location.href = 'finish-jobs.html'; // Finish Jobs පේජ් එකට යාමට
+                window.location.href = 'finish-jobs.html';
             } else if (pageName === 'settings') {
-                window.location.href = 'settings.html'; // Settings පේජ් එකට යාමට
+                window.location.href = 'settings.html';
             } else if (pageName === 'dashboard') {
-                window.location.href = 'index.html'; // වෙනත් පේජ්වල සිට ප්‍රධාන ඩෑෂ්බෝඩ් එකට පැමිණීමට
+                window.location.href = 'index.html';
             } else {
                 alert(pageName + " page will open soon!");
             }
