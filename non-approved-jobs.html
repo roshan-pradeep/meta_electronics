@@ -4,7 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meta Electronics - Non-Approved Jobs</title>
+    <!-- CSS ස්ටයිල් ෆයිල් එක සම්බන්ධ කිරීම -->
     <link rel="stylesheet" href="style.css">
+    <!-- Supabase JavaScript Library එක CDN එක හරහා ඇතුළත් කිරීම -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -12,19 +14,20 @@
     <div class="container" style="max-width: 800px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Non-Approved Jobs</h2>
+            <!-- නැවත ඩෑෂ්බෝඩ් එකට යාමට බොත්තම -->
             <a href="index.html" class="btn" style="width: auto; padding: 8px 15px; text-decoration: none; background-color: #6c757d; text-align: center;">Dashboard</a>
         </div>
 
-        <!-- දුරකථන අංක ෆිල්ටර් බොත්තම් -->
+        <!-- දුරකථන අංක ෆිල්ටර් බොත්තම් වැටෙන කන්ටේනර් එක -->
         <div id="phone-filter-container" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
 
-        <!-- ජොබ්ස් ලැයිස්තුව -->
+        <!-- Non-Approved ජොබ්ස් ලැයිස්තුව වැටෙන ප්‍රධාන කන්ටේනර් එක -->
         <div id="non-approved-jobs-container">
             <p style="text-align: center; color: #666; font-weight: bold;">Please click a phone number button above to view non-approved jobs.</p>
         </div>
     </div>
 
-    <!-- පාරිභෝගිකයාගේ ජොබ්ස් පෙන්වන Modal එක -->
+    <!-- පාරිභෝගිකයාගේ අනෙකුත් ජොබ්ස් පෙන්වන Modal / Pop-up එක -->
     <div id="customer-jobs-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
         <div style="background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; text-align: left; position: relative;">
             <button onclick="closeModal()" style="position: absolute; top: 15px; right: 15px; background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Close X</button>
@@ -34,18 +37,21 @@
     </div>
 
     <script>
+        // Supabase සම්බන්ධ වීමට අවශ්‍ය Credentials
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         const jobsContainer = document.getElementById('non-approved-jobs-container');
         const phoneFilterContainer = document.getElementById('phone-filter-container');
-        let allNonApprovedJobs = [];
+        let allNonApprovedJobs = []; // සියලුම non-approved ජොබ්ස් ගබඩා කරගැනීමට
 
+        // පිටුව ලෝඩ් වූ වහාම ඩේටා ලබා ගැනීම
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchNonApprovedJobs();
         });
 
+        // Supabase වෙතින් 'Non-Approved' තත්ත්වයේ ඇති ජොබ්ස් ලබා ගැනීම
         async function fetchNonApprovedJobs() {
             const { data: jobs, error } = await supabaseClient
                 .from('jobs')
@@ -69,16 +75,19 @@
             jobsContainer.innerHTML = `<p style="text-align: center; color: #666; font-weight: bold; background: #fff; padding: 20px; border: 1px dashed #ccc; border-radius: 8px;">👈 Please click a phone number button above to view non-approved jobs.</p>`;
         }
 
+        // පාරිභෝගික දුරකථන අංක සඳහා ෆිල්ටර් බොත්තම් සෑදීම
         function createPhoneFilterButtons(jobs) {
             phoneFilterContainer.innerHTML = '';
             const uniquePhones = [...new Set(jobs.map(job => job.customer_phone))];
 
+            // 'All Non-Approved Jobs' මූලික බොත්තම
             const allBtn = document.createElement('button');
             allBtn.textContent = "All Non-Approved Jobs";
             allBtn.style.cssText = "background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;";
             allBtn.onclick = () => displayJobs(allNonApprovedJobs);
             phoneFilterContainer.appendChild(allBtn);
 
+            // එක් එක් අංකයට වෙනම බොත්තම් සෑදීම
             uniquePhones.forEach(phone => {
                 const phoneBtn = document.createElement('button');
                 phoneBtn.innerHTML = `📞 ${phone}`;
@@ -91,6 +100,7 @@
             });
         }
 
+        // ෆිල්ටර් කළ ජොබ්ස් කාඩ්පත් ස්ක්‍රීන් එකේ පෙන්වීම
         function displayJobs(jobs) {
             if (jobs.length === 0) {
                 jobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No jobs match this filter.</p>`;
@@ -100,25 +110,91 @@
             jobsContainer.innerHTML = '';
             jobs.forEach(job => {
                 const card = document.createElement('div');
-                card.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px; text-align: left;";
+                card.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px; text-align: left; position: relative; user-select: none;";
+                
                 card.innerHTML = `
+                    <p style="font-size: 11px; color: #888; margin-bottom: 5px;">💡 Hint: Long-press or Right-click on this card to delete.</p>
                     <p><strong>Item:</strong> ${job.item}</p>
                     <p><strong>Model:</strong> ${job.model}</p>
                     <p><strong>Serial Number:</strong> ${job.serial_number}</p>
                     <p><strong>Fault:</strong> ${job.fault}</p>
+                    
+                    <!-- පාරිභෝගිකයාගේ දුරකථන අංකය ක්ලික් කළ විට අනෙකුත් ජොබ්ස් පෙන්වීම -->
                     <p><strong>Customer Phone:</strong> 
                         <button onclick="viewCustomerJobs('${job.customer_phone}')" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">
                             📞 ${job.customer_phone}
                         </button>
                     </p>
+                    
                     <p><strong>Estimated Cost:</strong> Rs. ${job.repair_charges || 0}</p>
                     <p><strong>Description:</strong> ${job.description || 'N/A'}</p>
                     <p style="font-size: 12px; color: #777;">Date: ${new Date(job.created_at).toLocaleString()}</p>
+                    
+                    <!-- ජොබ් එක ක්ලික් කරගෙන ඉන්නකොට (Long Press / Right Click) මතුවන ඩීලීට් කොටුව -->
+                    <div id="delete-box-${job.id}" style="display: none; margin-top: 15px; padding: 12px; background: #fff3f3; border: 1px dashed #dc3545; border-radius: 6px; text-align: center;">
+                        <p style="color: #dc3545; font-weight: bold; margin-bottom: 8px; font-size: 13px;">Do you want to delete this non-approved job?</p>
+                        <button onclick="deleteNonApprovedJob('${job.id}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Delete Job Permanently</button>
+                    </div>
                 `;
+
+                // **ස්මාර්ට්ෆෝන් සඳහා Long Press සහ පරිගණක සඳහා Right Click හැසිරවීම**
+                let pressTimer = null;
+
+                card.addEventListener('touchstart', (e) => {
+                    pressTimer = setTimeout(() => {
+                        toggleDeleteBox(job.id);
+                    }, 800); // තත්පර 0.8ක් අල්ලාගෙන සිටියහොත් ඩීලීට් බොක්ස් එක පෙන්වයි
+                });
+
+                card.addEventListener('touchend', () => {
+                    clearTimeout(pressTimer);
+                });
+
+                card.addEventListener('touchmove', () => {
+                    clearTimeout(pressTimer);
+                });
+
+                card.addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); // සාමාන්‍ය බ්‍රව්සර් මෙනු එක ඒම වැළැක්වීම
+                    toggleDeleteBox(job.id);
+                });
+
                 jobsContainer.appendChild(card);
             });
         }
 
+        // ඩීලීට් බොක්ස් එක පෙන්වීම හෝ වැසීම පාලනය කිරීම
+        function toggleDeleteBox(jobId) {
+            const deleteBox = document.getElementById(`delete-box-${jobId}`);
+            if (deleteBox) {
+                if (deleteBox.style.display === 'none') {
+                    deleteBox.style.display = 'block';
+                } else {
+                    deleteBox.style.display = 'none';
+                }
+            }
+        }
+
+        // ඩේටාබේස් එකෙන් අදාළ Non-Approved Job එක සම්පූර්ණයෙන්ම මකා දැමීම
+        async function deleteNonApprovedJob(jobId) {
+            if (!confirm("Are you sure you want to permanently delete this non-approved job?")) {
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('jobs')
+                .delete()
+                .eq('id', jobId);
+
+            if (error) {
+                alert("Error deleting job: " + error.message);
+            } else {
+                alert("Job deleted successfully!");
+                await fetchNonApprovedJobs(); // ලැයිස්තුව නැවත අප්ඩේට් කර පෙන්වීම
+            }
+        }
+
+        // පාරිභෝගිකයාගේ අනෙකුත් ජොබ්ස් මෝඩාල් එකක පෙන්වීම
         async function viewCustomerJobs(phone) {
             const modal = document.getElementById('customer-jobs-modal');
             const modalTitle = document.getElementById('modal-title');
@@ -141,17 +217,23 @@
 
             modalContent.innerHTML = '';
             jobs.forEach(job => {
+                let statusColor = 'orange';
+                if (job.status === 'Approved') statusColor = 'blue';
+                else if (job.status === 'Non-Approved') statusColor = 'red';
+                else if (job.status === 'Finished') statusColor = 'green';
+
                 const box = document.createElement('div');
                 box.style.cssText = "background: #f1f1f1; border: 1px solid #ccc; padding: 12px; margin-bottom: 10px; border-radius: 6px;";
                 box.innerHTML = `
                     <p><strong>Item:</strong> ${job.item} (${job.model})</p>
                     <p><strong>Fault:</strong> ${job.fault}</p>
-                    <p><strong>Status:</strong> <span style="color: red; font-weight: bold;">${job.status}</span></p>
+                    <p><strong>Status:</strong> <span style="color: ${statusColor}; font-weight: bold;">${job.status}</span></p>
                 `;
                 modalContent.appendChild(box);
             });
         }
 
+        // මෝඩාල් එක වැසීම
         function closeModal() {
             document.getElementById('customer-jobs-modal').style.display = 'none';
         }

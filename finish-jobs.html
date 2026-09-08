@@ -11,8 +11,6 @@
 </head>
 <body>
 
-    
-
     <div class="container" style="max-width: 800px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Finished Repair Jobs</h2>
@@ -43,7 +41,7 @@
     </div>
 
     <script>
-        // Supabase Credentials
+        // Supabase Credentials (සම්බන්ධ වීමට අවශ්‍ය තොරතුරු)
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -53,6 +51,7 @@
 
         let allFinishJobs = []; // සියලුම ෆිනිශ් වුණු ජොබ්ස් ගබඩා කරගැනීමට
 
+        // පිටුව ලෝඩ් වූ වහාම ඩේටා ලබා ගැනීමට ක්‍රියාත්මක වේ
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchFinishJobs();
         });
@@ -72,7 +71,6 @@
             }
 
             if (jobs.length === 0) {
-                // මෙන්න මෙතන තිබුණු වැරැද්ද (පරණ කෝඩ් එකේ " වෙනුවට වැරදි සලකුණක් තිබුණා)
                 finishJobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No finished jobs found.</p>`;
                 phoneFilterContainer.innerHTML = '';
                 return;
@@ -125,9 +123,10 @@
             finishJobsContainer.innerHTML = '';
             jobs.forEach(job => {
                 const jobCard = document.createElement('div');
-                jobCard.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px; text-align: left;";
+                jobCard.style.cssText = "background: #f9f9f9; border: 1px solid #ddd; padding: 20px; margin-bottom: 20px; border-radius: 8px; text-align: left; position: relative; user-select: none;";
                 
                 jobCard.innerHTML = `
+                    <p style="font-size: 11px; color: #888; margin-bottom: 5px;">💡 Hint: Long-press or Right-click on this card to delete.</p>
                     <p><strong>Item:</strong> ${job.item}</p>
                     <p><strong>Model:</strong> ${job.model}</p>
                     <p><strong>Serial Number:</strong> ${job.serial_number}</p>
@@ -149,10 +148,71 @@
                     
                     <p style="font-size: 12px; color: #777; margin-top: 10px;">Registered Date: ${new Date(job.created_at).toLocaleString()}</p>
                     <p style="color: green; font-weight: bold; margin-top: 5px;">Status: Finished</p>
+                    
+                    <!-- ජොබ් එක ක්ලික් කරගෙන ඉන්නකොට (Long Press / Right Click) මතුවන ඩിലීට් කොටුව (Initially Hidden) -->
+                    <div id="delete-box-${job.id}" style="display: none; margin-top: 15px; padding: 12px; background: #fff3f3; border: 1px dashed #dc3545; border-radius: 6px; text-align: center;">
+                        <p style="color: #dc3545; font-weight: bold; margin-bottom: 8px; font-size: 13px;">Do you want to delete this finished job?</p>
+                        <button onclick="deleteFinishedJob('${job.id}')" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-weight: bold;">Delete Job Permanently</button>
+                    </div>
                 `;
+
+                // **මෙතනදි Long Press (ස්මාර්ට්ෆෝන් සඳහා) සහ Contextmenu / Right Click (පරිගණක සඳහා) හැසිරවීම සකසා ඇත**
+                let pressTimer = null;
+
+                // ෆෝන් එකකදී ඇඟිල්ල තබාගෙන සිටින විට (Touch Screen Long Press)
+                jobCard.addEventListener('touchstart', (e) => {
+                    pressTimer = setTimeout(() => {
+                        toggleDeleteBox(job.id);
+                    }, 800); // තත්පර 0.8ක් අල්ලාගෙන සිටියහොත් ඩීලීට් බොක්ස් එක පෙන්වයි
+                });
+
+                jobCard.addEventListener('touchend', () => {
+                    clearTimeout(pressTimer);
+                });
+
+                jobCard.addEventListener('touchmove', () => {
+                    clearTimeout(pressTimer); // ඇඟිල්ල පෙළස්සමින් වෙන තැනකට ගෙන ගියහොත් කැන්සල් වේ
+                });
+
+                // පරිගණකයකදී මූසිකයෙන් Right-Click කළ විට (Context Menu වැළැක්වීම සහ Delete Box පෙන්වීම)
+                jobCard.addEventListener('contextmenu', (e) => {
+                    e.preventDefault(); // සාමාන්‍ය බ්‍රව්සර් මෙනු එක ඒම වළක්වයි
+                    toggleDeleteBox(job.id);
+                });
 
                 finishJobsContainer.appendChild(jobCard);
             });
+        }
+
+        // ඩීලීට් බොක්ස් එක පෙන්වීම හෝ වැසීම පාලනය කරන ෆන්ක්ෂන් එක
+        function toggleDeleteBox(jobId) {
+            const deleteBox = document.getElementById(`delete-box-${jobId}`);
+            if (deleteBox) {
+                if (deleteBox.style.display === 'none') {
+                    deleteBox.style.display = 'block';
+                } else {
+                    deleteBox.style.display = 'none';
+                }
+            }
+        }
+
+        // ඩේටාබේස් එකෙන් අදාළ Finished Job එක සම්පූර්ණයෙන්ම මකා දැමීම
+        async function deleteFinishedJob(jobId) {
+            if (!confirm("Are you sure you want to permanently delete this finished job?")) {
+                return;
+            }
+
+            const { error } = await supabaseClient
+                .from('jobs')
+                .delete()
+                .eq('id', jobId);
+
+            if (error) {
+                alert("Error deleting job: " + error.message);
+            } else {
+                alert("Job deleted successfully!");
+                await fetchFinishJobs(); // ලැයිස්තුව නැවත අප්ඩේට් කර පෙන්වීම
+            }
         }
 
         // දුරකථන අංකය ක්ලික් කළ විට එම අංකයට අදාළ සියලුම ජොබ්ස් මෝඩල් එකේ පෙන්වීම
@@ -201,6 +261,7 @@
             });
         }
 
+        // මොඩාල් එක වසා දැමීම සඳහා
         function closeModal() {
             document.getElementById('customer-jobs-modal').style.display = 'none';
         }
