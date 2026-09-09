@@ -13,6 +13,7 @@
     <div class="container" style="max-width: 600px; margin-top: 30px;">
         <h2 style="text-align: center; color: #333;">Meta Electronics - Repair Estimate</h2>
         
+        <!-- ලෝඩ් වන අවස්ථාවේ පෙන්වන කොටස -->
         <div id="loading-box" style="text-align: center; padding: 20px; font-weight: bold; color: #666;">
             Loading job details...
         </div>
@@ -29,13 +30,13 @@
             <p><strong>Repair Description / Parts Needed:</strong></p>
             <p id="job-desc" style="background: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 4px;"></p>
 
-            <!-- Damage Photos Section -->
+            <!-- Damage Photos Section (හානි වූ කොටස්වල පින්තූර) -->
             <div id="damage-section" style="margin-top: 15px; display: none;">
                 <p style="font-weight: bold; color: #d9534f;">Damage Parts Photos:</p>
                 <div id="damage-gallery" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
             </div>
 
-            <!-- New Parts Photos Section -->
+            <!-- New Parts Photos Section (අලුතින් දමන කොටස්වල පින්තූර) -->
             <div id="new-section" style="margin-top: 15px; display: none;">
                 <p style="font-weight: bold; color: #0275d8;">New Parts Photos:</p>
                 <div id="new-gallery" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
@@ -46,15 +47,32 @@
             <!-- ස්ටේටස් එක හෝ දැනුම්දීම් පෙන්වන තැන -->
             <div id="status-display-box" style="text-align: center; margin-bottom: 15px; font-weight: bold; font-size: 16px;"></div>
 
-            <!-- Approve සහ Non-Approved බොත්තම් (මුල් අවස්ථාවේදී හෝ ඇස්තමේන්තු නැති නම් නොපෙන්වයි) -->
+            <!-- Approve සහ Non-Approved බොත්තම් -->
             <div id="action-buttons-container" style="display: none; gap: 10px;">
-                <button onclick="updateJobStatus('Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">✅ Approve Estimate</button>
-                <button onclick="updateJobStatus('Non-Approved')" style="flex: 1; background: #dc3545; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">❌ Reject / Non-Approved</button>
+                <button onclick="confirmAction('Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">✅ Approve Estimate</button>
+                <button onclick="confirmAction('Non-Approved')" style="flex: 1; background: #dc3545; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">❌ Reject / Non-Approved</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- නව Custom Popup Modal (ස්ථානගත කිරීම්) -->
+    <!-- ========================================== -->
+    <div id="custom-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 2000;">
+        <div style="background: white; padding: 25px; border-radius: 10px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <h3 id="modal-msg-title" style="margin-top: 0; color: #333;">Confirmation</h3>
+            <p id="modal-msg-body" style="color: #666; font-size: 15px; margin-bottom: 20px;"></p>
+            
+            <!-- Yes / No බොත්තම් (තහවුරු කිරීමට) -->
+            <div id="modal-buttons" style="display: flex; gap: 10px; justify-content: center;">
+                <button id="modal-btn-yes" style="background: #28a745; color: white; border: none; padding: 8px 20px; border-radius: 5px; font-weight: bold; cursor: pointer;">Yes</button>
+                <button onclick="closeCustomModal()" style="background: #6c757d; color: white; border: none; padding: 8px 20px; border-radius: 5px; font-weight: bold; cursor: pointer;">Cancel</button>
             </div>
         </div>
     </div>
 
     <script>
+        // Supabase සම්බන්ධතා විස්තර
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -63,6 +81,7 @@
         const urlParams = new URLSearchParams(window.location.search);
         const jobId = urlParams.get('id');
 
+        // පේජ් එක ලෝඩ් වූ සැණින් ජොබ් විස්තර ලබා ගැනීම
         window.addEventListener('DOMContentLoaded', async () => {
             if (!jobId) {
                 document.getElementById('loading-box').innerHTML = `<p style="color: red;">Invalid Job Link!</p>`;
@@ -71,6 +90,7 @@
             await fetchJobDetails();
         });
 
+        // ඩේටාබේස් එකෙන් අදාළ ජොබ් එකේ විස්තර ගෙන ඒම
         async function fetchJobDetails() {
             const { data: job, error } = await supabaseClient
                 .from('jobs')
@@ -86,7 +106,7 @@
             document.getElementById('loading-box').style.display = 'none';
             document.getElementById('job-details-card').style.display = 'block';
 
-            // දත්ත HTML එකට ඇතුළත් කිරීම
+            // ලබාගත් දත්ත HTML එකට ඇතුළත් කිරීම
             document.getElementById('job-item').textContent = job.item || '';
             document.getElementById('job-model').textContent = job.model || '';
             document.getElementById('job-serial').textContent = job.serial_number || '';
@@ -97,7 +117,7 @@
             const actionContainer = document.getElementById('action-buttons-container');
             const statusDisplay = document.getElementById('status-display-box');
 
-            // 1. ජොබ් එක අලුතින් දමා ඇත, තවම ඇස්තමේන්තුවක් (charges) දාලා නැත්නම්
+            // 1. ජොබ් එක අලුතින් දමා ඇත, තවම ඇස්තමේන්තුවක් දාලා නැත්නම්
             if (job.status === 'Pending' && (!job.repair_charges || job.repair_charges == 0)) {
                 actionContainer.style.display = 'none'; // බටන් සඟවයි
                 statusDisplay.innerHTML = `
@@ -111,7 +131,7 @@
                 actionContainer.style.display = 'none';
                 statusDisplay.innerHTML = `Current Status: <span style="color: ${job.status === 'Approved' ? 'green' : 'red'};">${job.status}</span>`;
             } 
-            // 3. ඩෑෂ්බෝඩ් එකෙන් Estimate එක දාලා WhatsApp එකෙන් ලින්ක් එක එව්වම (Pending වුණත් charges තියෙනවා නම්)
+            // 3. ඩෑෂ්බෝඩ් එකෙන් Estimate එක දාලා WhatsApp එකෙන් ලින්ක් එක එව්වම
             else {
                 actionContainer.style.display = 'flex'; // බටන් පෙන්වයි
                 statusDisplay.style.display = 'none';
@@ -152,9 +172,57 @@
             }
         }
 
-        // කස්ටමර් Approve හෝ Non-Approved දුන් විට ඩේටාබේස් එක අප්ඩේට් කිරීම
+        // ========================================== -->
+        // Custom Popup පාලනය කරන ක්‍රමවේද (Functions)
+        // ========================================== -->
+
+        // කස්ටමර් බොත්තමක් ක්ලික් කළ විට තහවුරු කිරීමේ (Confirmation) මොඩල් එක පෙන්වීම
+        function confirmAction(status) {
+            const modal = document.getElementById('custom-modal');
+            const title = document.getElementById('modal-msg-title');
+            const body = document.getElementById('modal-msg-body');
+            const btnYes = document.getElementById('modal-btn-yes');
+            const btnButtons = document.getElementById('modal-buttons');
+
+            title.textContent = "Confirmation";
+            body.textContent = `Are you sure you want to set status as "${status}"?`;
+            btnButtons.style.display = 'flex'; // Yes/Cancel බොත්තම් පෙන්වයි
+
+            // Yes බොත්තම එබූ විට ඩේටාබේස් එක අප්ඩේට් කිරීමට අදාළ ෆන්ක්ෂන් එක සම්බන්ධ කිරීම
+            btnYes.onclick = function() {
+                updateJobStatus(status);
+            };
+
+            modal.style.display = 'flex';
+        }
+
+        // සාර්ථකව යාවත්කාලීන වූ පසු ලස්සන මැසේජ් එකක් පෙන්වීම
+        function showSuccessModal(message) {
+            const modal = document.getElementById('custom-modal');
+            const title = document.getElementById('modal-msg-title');
+            const body = document.getElementById('modal-msg-body');
+            const btnButtons = document.getElementById('modal-buttons');
+
+            title.textContent = "Success!";
+            body.textContent = message;
+            btnButtons.style.display = 'none'; // Yes/Cancel බොත්තම් වසා දමයි
+
+            modal.style.display = 'flex';
+
+            // තත්පර 2කින් පේජ් එක ඔටෝ රිෆ්‍රෙෂ් වීම
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
+        }
+
+        // මොඩල් එක වසා දැමීම සඳහා
+        function closeCustomModal() {
+            document.getElementById('custom-modal').style.display = 'none';
+        }
+
+        // ඩේටාබේස් එකේ ස්ටේටස් එක අප්ඩේට් කිරීම (Supabase Update)
         async function updateJobStatus(newStatus) {
-            if (!confirm(`Are you sure you want to set status as "${newStatus}"?`)) return;
+            closeCustomModal(); // මුලින් මොඩල් එක වසයි
 
             const { error } = await supabaseClient
                 .from('jobs')
@@ -164,8 +232,8 @@
             if (error) {
                 alert("Error updating status: " + error.message);
             } else {
-                alert(`Successfully updated status to ${newStatus}! Thank you.`);
-                window.location.reload();
+                // පරණ alert එක වෙනුවට අලුත් ලස්සන සක්සස් මොඩල් එක පෙන්වයි
+                showSuccessModal(`Successfully updated status to ${newStatus}! Thank you.`);
             }
         }
     </script>
