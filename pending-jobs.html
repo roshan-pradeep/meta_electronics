@@ -260,7 +260,6 @@
                 if (damageInput.files.length > 0) {
                     const files = Array.from(damageInput.files).slice(0, 5);
                     for (let file of files) {
-                        // ෆයිල් නේම් එකේ ඇති ස්පේස් සහ අනවශ්‍ය අකුරු ඉවත් කිරීම (Bad Request 400 errors මගහරවා ගැනීමට)
                         const safeFileName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
                         const fileName = `damage_${tempJobId}_${Date.now()}_${safeFileName}`;
                         
@@ -268,7 +267,6 @@
                             .from('job-images')
                             .upload(fileName, file);
 
-                        // Upload Error එකක් ඇත්නම් එය බලා ගැනීමට Error Handling එකක් එකතු කර ඇත
                         if (error) {
                             alert("Error uploading damage photo (" + file.name + "): " + error.message);
                             console.error("Storage Upload Error:", error);
@@ -288,7 +286,6 @@
                 if (newPartsInput.files.length > 0) {
                     const files = Array.from(newPartsInput.files).slice(0, 5);
                     for (let file of files) {
-                        // ෆයිල් නේම් එකේ ඇති ස්පේස් සහ අනවශ්‍ය අකුරු ඉවත් කිරීම (Bad Request 400 errors මගහරවා ගැනීමට)
                         const safeFileName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
                         const fileName = `new_${tempJobId}_${Date.now()}_${safeFileName}`;
                         
@@ -296,7 +293,6 @@
                             .from('job-images')
                             .upload(fileName, file);
 
-                        // Upload Error එකක් ඇත්නම් එය බලා ගැනීමට Error Handling එකක් එකතු කර ඇත
                         if (error) {
                             alert("Error uploading new parts photo (" + file.name + "): " + error.message);
                             console.error("Storage Upload Error:", error);
@@ -337,7 +333,6 @@
 
                     let cleanPhone = customerPhone.replace(/^0/, '');
                     
-                    // WhatsApp හරහා ලින්ක් එක කැඩී යාම වැළැක්වීමට URL එක වෙනම සකස් කිරීම
                     let baseUrl = "https://roshan-pradeep.github.io/meta_electronics/customer.html";
                     let linkWithParams = `${baseUrl}?id=${jobId}&action=admin`;
 
@@ -346,7 +341,7 @@
                     let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
                     
                     window.open(whatsappUrl, '_blank');
-                    window.location.reload(); // පේජ් එක රීලෝඩ් කිරීම
+                    window.location.reload();
                 }
             } catch (err) {
                 console.error("Unexpected Error:", err);
