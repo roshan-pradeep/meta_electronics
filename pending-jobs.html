@@ -37,7 +37,14 @@
     <script>
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false
+            }
+        });
 
         const pendingJobsContainer = document.getElementById('pending-jobs-container');
         const phoneFilterContainer = document.getElementById('phone-filter-container');
@@ -146,8 +153,12 @@
                             <div id="new-preview-${job.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
                         </div>
 
-                        <!-- මෙන්න ඔය බටන් එක (Estimate Send to Customer) -->
-                        <button onclick="sendEstimate('${job.id}', '${job.customer_phone}', '${job.item}', '${job.model}')" class="btn" style="background-color: #ffc107; color: #000; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">Estimate Send to Customer</button>
+                        <!-- ක්ලික් කළ ගමන් WhatsApp ඕපන් වන කොළ පාට බටන් එක -->
+                        <div id="action-container-${job.id}">
+                            <button onclick="sendEstimate('${job.id}', '${job.customer_phone}', '${job.item}', '${job.model}')" class="btn" style="background-color: #25d366; color: white; padding: 12px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">
+                                📲 Estimate Send to Customer (Open WhatsApp)
+                            </button>
+                        </div>
                     </div>
                 `;
                 pendingJobsContainer.appendChild(jobCard);
@@ -215,8 +226,8 @@
             document.getElementById('customer-jobs-modal').style.display = 'none';
         }
 
-        // මෙන්න බටන් එක ක්ලික් කළම වැඩ කරන ප්‍රධාන ෆන්ක්ෂන් එක (ෆොටෝස් අප්ලෝඩ් කර, WhatsApp මැසේජ් එක සහ ලින්ක් එක හදන තැන)
-        async function sendEstimate(jobId, customerPhone, item, model) {
+        // ක්ලික් කළ ගමන් WhatsApp විවෘත වන අතර, ෆොටෝස් බැක්ග්‍රවුන්ඩ් එකෙන් අප්ලෝඩ් වේ
+        function sendEstimate(jobId, customerPhone, item, model) {
             const chargesInput = document.getElementById(`charges-${jobId}`).value;
             const descInput = document.getElementById(`desc-${jobId}`).value;
             const damageInput = document.getElementById(`damage-photos-${jobId}`);
@@ -227,64 +238,60 @@
                 return;
             }
 
+            let cleanPhone = customerPhone.replace(/^0/, '');
+            let baseUrl = "https://roshan-pradeep.github.io/meta_electronics/customer.html";
+            let uniqueLink = `${baseUrl}?id=${jobId}&v=${Date.now()}`;
+
+            let customerMsg = `Hello from Meta Electronics! Your repair estimate for ${item} (${model}) is now ready.\n\n` +
+                              `Estimated Cost: Rs. ${chargesInput}\n` +
+                              `Details: ${descInput}\n\n` +
+                              `Please click the link below to view photos, repair details, and approve/reject your estimate:\n` +
+                              `${uniqueLink}`;
+            
+            let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
+            
+            // 1. ක්ලික් කළ වහාම WhatsApp එක විවෘත වේ (පරක්කු වීමකින් තොරව)
+            window.open(whatsappUrl, '_blank');
+
+            // 2. ෆොටෝස් සහ ඩේටා ටික බැක්ග්‍රවුන්ඩ් එකෙන් අප්ලෝඩ් වී සේව් වේ
+            uploadPhotosInBackground(jobId, chargesInput, descInput, damageInput, newPartsInput);
+        }
+
+        async function uploadPhotosInBackground(jobId, charges, desc, damageInput, newPartsInput) {
             let damageImageUrls = [];
             let newImageUrls = [];
             const tempJobId = 'job_' + jobId + '_' + Date.now();
 
             try {
-                // 1. Damage Photos Upload
                 if (damageInput.files.length > 0) {
                     const files = Array.from(damageInput.files).slice(0, 5);
                     for (let file of files) {
                         const safeFileName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
                         const fileName = `damage_${tempJobId}_${Date.now()}_${safeFileName}`;
-                        
-                        const { data, error } = await supabaseClient.storage
-                            .from('job-images')
-                            .upload(fileName, file);
-
-                        if (error) {
-                            alert("Error uploading damage photo: " + error.message);
-                            return;
-                        }
-
+                        const { data } = await supabaseClient.storage.from('job-images').upload(fileName, file);
                         if (data) {
-                            const { data: publicUrlData } = supabaseClient.storage
-                                .from('job-images')
-                                .getPublicUrl(fileName);
+                            const { data: publicUrlData } = supabaseClient.storage.from('job-images').getPublicUrl(fileName);
                             damageImageUrls.push(publicUrlData.publicUrl);
                         }
                     }
                 }
 
-                // 2. New Parts Photos Upload
                 if (newPartsInput.files.length > 0) {
                     const files = Array.from(newPartsInput.files).slice(0, 5);
                     for (let file of files) {
                         const safeFileName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
                         const fileName = `new_${tempJobId}_${Date.now()}_${safeFileName}`;
-                        
-                        const { data, error } = await supabaseClient.storage
-                            .from('job-images')
-                            .upload(fileName, file);
-
-                        if (error) {
-                            alert("Error uploading new parts photo: " + error.message);
-                            return;
-                        }
-
+                        const { data } = await supabaseClient.storage.from('job-images').upload(fileName, file);
                         if (data) {
-                            const { data: publicUrlData } = supabaseClient.storage
-                                .from('job-images')
-                                .getPublicUrl(fileName);
+                            const { data: publicUrlData } = supabaseClient.storage.from('job-images').getPublicUrl(fileName);
                             newImageUrls.push(publicUrlData.publicUrl);
                         }
                     }
                 }
 
                 let updateData = {
-                    repair_charges: parseFloat(chargesInput),
-                    description: descInput
+                    repair_charges: parseFloat(charges),
+                    description: desc
                 };
 
                 if (damageImageUrls.length > 0) {
@@ -294,50 +301,11 @@
                     updateData.new_images = JSON.stringify(newImageUrls);
                 }
 
-                // Database එකට ඇස්තමේන්තුව සහ ෆොටෝස් සේව් කිරීම
-                const { error } = await supabaseClient
-                    .from('jobs')
-                    .update(updateData)
-                    .eq('id', jobId);
+                await supabaseClient.from('jobs').update(updateData).eq('id', jobId);
+                console.log("Background upload & save completed successfully!");
 
-                if (error) {
-                    alert("Error saving estimate: " + error.message);
-                } else {
-                    alert("Estimate and photos saved successfully! Opening WhatsApp...");
-
-                    let cleanPhone = customerPhone.replace(/^0/, '');
-                    
-                    // බ්‍රව්සර් කැෂ් (Cache) ප්‍රශ්න මඟහරවා ගැනීමට අලුත්ම Timestamp එකක් සහිත Unique Link එකක් සෑදීම
-                    let baseUrl = "https://roshan-pradeep.github.io/meta_electronics/customer.html";
-                    let uniqueLink = `${baseUrl}?id=${jobId}&v=${Date.now()}`;
-
-                    // WhatsApp මැසේජ් එක සැකසීම (විස්තර + ෆොටෝස් ලින්ක්ස් + කස්ටමර් ලින්ක් එක)
-                    let customerMsg = `Hello from Meta Electronics! Your repair estimate for ${item} (${model}) is now ready.\n` +
-                                      `Estimated Cost: Rs. ${chargesInput}\n` +
-                                      `Details: ${descInput}\n`;
-
-                    // ඩේටාබේස් එකට අප්ලෝඩ් වූ Damage Photos වල ලින්ක්ස් මැසේජ් එකට එකතු කිරීම
-                    if (damageImageUrls.length > 0) {
-                        customerMsg += `\nDamage Photos:\n` + damageImageUrls.join('\n');
-                    }
-
-                    // ඩේටාබේස් එකට අප්ලෝඩ් වූ New Parts Photos වල ලින්ක්ස් මැසේජ් එකට එකතු කිරීම
-                    if (newImageUrls.length > 0) {
-                        customerMsg += `\n\nNew Parts Photos:\n` + newImageUrls.join('\n');
-                    }
-
-                    // අනුමත කිරීමට සහ ප්‍රතික්ෂේප කිරීමට අවශ්‍ය ලින්ක් එක මැසේජ් එක අවසානයට එකතු කිරීම
-                    customerMsg += `\n\nPlease check and approve/reject here:\n${uniqueLink}`;
-                    
-                    let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
-                    
-                    // WhatsApp චැට් එක අලුත් ටැබ් එකකින් විවෘත කිරීම සහ පේජ් එක රිෆ්‍රෙෂ් කිරීම
-                    window.open(whatsappUrl, '_blank');
-                    window.location.reload();
-                }
             } catch (err) {
-                console.error("Unexpected Error:", err);
-                alert("An unexpected error occurred: " + err.message);
+                console.error("Background Upload Error:", err);
             }
         }
     </script>
