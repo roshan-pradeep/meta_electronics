@@ -4,30 +4,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Meta Electronics - Pending Jobs & Estimate</title>
-    <!-- CSS ස්ටයිල් ෆයිල් එක සම්බන්ධ කිරීම -->
     <link rel="stylesheet" href="style.css">
-    <!-- Supabase JavaScript Library එක CDN එක හරහා ඇතුළත් කිරීම -->
+    <!-- Supabase JavaScript Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
     <div class="container" style="max-width: 800px;">
-        <!-- පිටුවේ උඩ කොටස (ශීර්ෂය සහ ඩෑෂ්බෝඩ් එකට යාමේ බොත්තම) -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h2>Pending Repair Jobs (Estimate)</h2>
             <a href="index.html" class="btn" style="width: auto; padding: 8px 15px; text-decoration: none; background-color: #6c757d; text-align: center;">Dashboard</a>
         </div>
 
-        <!-- පාරිභෝගිකයින්ගේ දුරකථන අංක අනුව ෆිල්ටර් කිරීමට (Filter Buttons) හැදෙන කොටස -->
+        <!-- Phone Filter Buttons -->
         <div id="phone-filter-container" style="margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
 
-        <!-- පෙන්ඩින් ජොබ්ස් ලැයිස්තුව පෙන්වන ප්‍රධාන කොටස -->
+        <!-- Pending Jobs Container -->
         <div id="pending-jobs-container">
             <p style="text-align: center; color: #666; font-weight: bold;">Please click a phone number button above to view jobs.</p>
         </div>
     </div>
 
-    <!-- එකම පාරිභෝගිකයාගේ අනෙකුත් ජොබ්ස් බලා ගැනීමට පෙන්වන Popup Modal එක -->
+    <!-- Customer Jobs Modal -->
     <div id="customer-jobs-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000;">
         <div style="background: white; padding: 25px; border-radius: 8px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; text-align: left; position: relative;">
             <button onclick="closeModal()" style="position: absolute; top: 15px; right: 15px; background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Close X</button>
@@ -37,23 +35,19 @@
     </div>
 
     <script>
-        // Supabase සේවාදායකය සඳහා අවශ්‍ය URL සහ Anon Key නිවැරදිව සැකසීම
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // අවශ්‍ය HTML Elements JavaScript වෙත ලබා ගැනීම
         const pendingJobsContainer = document.getElementById('pending-jobs-container');
         const phoneFilterContainer = document.getElementById('phone-filter-container');
 
-        let allPendingJobs = []; // සියලුම පෙන්ඩින් ජොබ්ස් දත්ත තබා ගැනීමට විචල්‍යයක්
+        let allPendingJobs = [];
 
-        // පේජ් එක ලෝඩ් වන විට පෙන්ඩින් ජොබ්ස් දත්ත සර්වර් එකෙන් ලබා ගැනීම
         window.addEventListener('DOMContentLoaded', async () => {
             await fetchPendingJobs();
         });
 
-        // Supabase වලින් 'Pending' තත්ත්වයේ ඇති ජොබ්ස් සියල්ල ලබා ගන්නා ෆන්ක්ෂන් එක
         async function fetchPendingJobs() {
             const { data: jobs, error } = await supabaseClient
                 .from('jobs')
@@ -61,13 +55,11 @@
                 .eq('status', 'Pending')
                 .order('created_at', { ascending: false });
 
-            // දෝෂයක් ඇත්නම් පෙන්වීම
             if (error) {
                 pendingJobsContainer.innerHTML = `<p style="color: red; text-align: center;">Error loading jobs: ${error.message}</p>`;
                 return;
             }
 
-            // පෙන්ඩින් ජොබ්ස් කිසිවක් නැත්නම්
             if (jobs.length === 0) {
                 pendingJobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No pending jobs found.</p>`;
                 phoneFilterContainer.innerHTML = '';
@@ -75,36 +67,32 @@
             }
 
             allPendingJobs = jobs;
-            createPhoneFilterButtons(allPendingJobs); // දුරකථන අංක අනුව ෆිල්ටර් බටන් සෑදීම
+            createPhoneFilterButtons(allPendingJobs);
             pendingJobsContainer.innerHTML = `<p style="text-align: center; color: #666; font-weight: bold; background: #fff; padding: 20px; border: 1px dashed #ccc; border-radius: 8px;">👈 Please click a phone number button above to view pending jobs.</p>`;
         }
 
-        // පාරිභෝගිකයින්ගේ දුරකථන අංක එකතු කර උඩින් බටන් සාදන ෆන්ක්ෂන් එක
         function createPhoneFilterButtons(jobs) {
             phoneFilterContainer.innerHTML = '';
             const uniquePhones = [...new Set(jobs.map(job => job.customer_phone))];
 
-            // 'All Pending Jobs' බොත්තම සෑදීම
             const allBtn = document.createElement('button');
             allBtn.textContent = "All Pending Jobs";
             allBtn.style.cssText = "background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;";
             allBtn.onclick = () => displayJobs(allPendingJobs);
             phoneFilterContainer.appendChild(allBtn);
 
-            // එක් එක් පාරිභෝගික අංකයට වෙනම බොත්තම් සෑදීම
             uniquePhones.forEach(phone => {
                 const phoneBtn = document.createElement('button');
                 phoneBtn.innerHTML = `📞 ${phone}`;
                 phoneBtn.style.cssText = "background: #dc3545; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px;";
                 phoneBtn.onclick = () => {
                     const filteredJobs = allPendingJobs.filter(job => job.customer_phone === phone);
-                    displayJobs(filteredJobs); // අදාළ අංකයට අයිති ජොබ්ස් පමණක් පෙන්වීම
+                    displayJobs(filteredJobs);
                 };
                 phoneFilterContainer.appendChild(phoneBtn);
             });
         }
 
-        // තෝරාගත් ජොබ්ස් ලැයිස්තුව ස්ක්‍රීන් එකේ පෙන්වන ෆන්ක්ෂන් එක (ෆොටෝ අප්ලෝඩ් සහ ප්‍රිවීව් කොටු සමඟ)
         function displayJobs(jobs) {
             if (jobs.length === 0) {
                 pendingJobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No jobs match this filter.</p>`;
@@ -121,20 +109,16 @@
                     <p><strong>Model:</strong> ${job.model}</p>
                     <p><strong>Serial Number:</strong> ${job.serial_number}</p>
                     <p><strong>Fault:</strong> ${job.fault}</p>
-                    
-                    <!-- පාරිභෝගිකයාගේ අංකය ක්ලික් කළ විට ඔහුගේ අනෙකුත් ජොබ්ස් පෙන්වන මොඩාල් එක විවෘත වේ -->
                     <p><strong>Customer Phone:</strong> 
                         <button onclick="viewCustomerJobs('${job.customer_phone}')" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; font-weight: bold;">
                             📞 ${job.customer_phone}
                         </button>
                     </p>
-
                     <p><strong>Advance Amount:</strong> Rs. ${job.advance_amount || 0}</p>
                     <p style="font-size: 12px; color: #777;">Registered Date: ${new Date(job.created_at).toLocaleString()}</p>
                     
                     <hr style="margin: 15px 0; border: 0; border-top: 1px solid #eee;">
                     
-                    <!-- ඇස්තමේන්තු මිල (Charges) සහ විස්තරය (Description) ඇතුළත් කරන කොටස -->
                     <div style="background: #fff; padding: 15px; border: 1px solid #ccc; border-radius: 6px;">
                         <h4 style="margin-top: 0; color: #333;">Prepare & Send Estimate</h4>
                         
@@ -148,25 +132,21 @@
                             <textarea id="desc-${job.id}" placeholder="Enter repair details or needed parts" style="width: 100%; padding: 8px; box-sizing: border-box; height: 60px;"></textarea>
                         </div>
 
-                        <!-- 1. Damage Parts Photos (උපරිම 5ක් තෝරා ගැනීමට සහ ප්‍රිවීව් පෙන්නීමට) -->
                         <div class="form-group" style="margin-bottom: 10px;">
                             <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #d9534f;">Damage Parts Photos (Max 5):</label>
                             <input type="file" id="damage-photos-${job.id}" accept="image/*" multiple onchange="previewImages(this, 'damage-preview-${job.id}')" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #fff;">
                             <small style="color: #666;">Select up to 5 images from phone/PC gallery.</small>
-                            <!-- පින්තූර තෝරාගත් පසු කුඩා කොටු (Thumbnails) පෙන්වන ග්‍රිඩ් එක -->
                             <div id="damage-preview-${job.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
                         </div>
 
-                        <!-- 2. New Parts Photos (උපරිම 5ක් තෝරා ගැනීමට සහ ප්‍රිවීව් පෙන්නීමට) -->
                         <div class="form-group" style="margin-bottom: 15px;">
                             <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #0275d8;">New Parts Photos (Max 5):</label>
                             <input type="file" id="new-photos-${job.id}" accept="image/*" multiple onchange="previewImages(this, 'new-preview-${job.id}')" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #fff;">
                             <small style="color: #666;">Select up to 5 images from phone/PC gallery.</small>
-                            <!-- පින්තූර තෝරාගත් පසු කුඩා කොටු (Thumbnails) පෙන්වන ග්‍රිඩ් එක -->
                             <div id="new-preview-${job.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
                         </div>
 
-                        <!-- ඇස්තමේන්තුව යැවීමේ බොත්තම -->
+                        <!-- මෙන්න ඔය බටන් එක (Estimate Send to Customer) -->
                         <button onclick="sendEstimate('${job.id}', '${job.customer_phone}', '${job.item}', '${job.model}')" class="btn" style="background-color: #ffc107; color: #000; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">Estimate Send to Customer</button>
                     </div>
                 `;
@@ -174,19 +154,17 @@
             });
         }
 
-        // ෆොටෝස් තෝරාගත් වහාම ඒවගේ පොඩි ප්‍රිවීව් (Thumbnail) කොටු ස්ක්‍රීන් එකේ පෙන්වන ෆන්ක්ෂන් එක
         function previewImages(input, previewContainerId) {
             const previewContainer = document.getElementById(previewContainerId);
-            previewContainer.innerHTML = ''; // කලින් තිබූ ප්‍රිවීව් මකා දැමීම
+            previewContainer.innerHTML = '';
 
             if (input.files) {
-                const files = Array.from(input.files).slice(0, 5); // උපරිම 5 කට සීමා කිරීම
+                const files = Array.from(input.files).slice(0, 5);
                 files.forEach(file => {
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         const img = document.createElement('img');
                         img.src = e.target.result;
-                        // කුඩා කොටු (Thumbnail)වල ස්ටයිල් එක
                         img.style.cssText = "width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;";
                         previewContainer.appendChild(img);
                     }
@@ -195,7 +173,6 @@
             }
         }
 
-        // පාරිභෝගිකයාගේ අංකය ක්ලික් කළ විට ඔහුගේ සියලුම ජොබ්ස් මෝඩාල් එකක පෙන්වීම
         async function viewCustomerJobs(phone) {
             const modal = document.getElementById('customer-jobs-modal');
             const modalTitle = document.getElementById('modal-title');
@@ -234,12 +211,11 @@
             });
         }
 
-        // මොඩාල් එක වසා දැමීම සඳහා
         function closeModal() {
             document.getElementById('customer-jobs-modal').style.display = 'none';
         }
 
-        // ඇස්තමේන්තු මිල සහ ෆොටෝස් අප්ලෝඩ් කර WhatsApp හරහා කස්ටමර්ට ලින්ක් එක යැවීම
+        // මෙන්න බටන් එක ක්ලික් කළම වැඩ කරන ප්‍රධාන ෆන්ක්ෂන් එක (WhatsApp Link එක හදන තැන)
         async function sendEstimate(jobId, customerPhone, item, model) {
             const chargesInput = document.getElementById(`charges-${jobId}`).value;
             const descInput = document.getElementById(`desc-${jobId}`).value;
@@ -256,7 +232,7 @@
             const tempJobId = 'job_' + jobId + '_' + Date.now();
 
             try {
-                // 1. Damage Photos 'job-images' බකට් එකට අප්ලෝඩ් කිරීම (උපරිම 5ක්)
+                // 1. Damage Photos Upload
                 if (damageInput.files.length > 0) {
                     const files = Array.from(damageInput.files).slice(0, 5);
                     for (let file of files) {
@@ -268,8 +244,7 @@
                             .upload(fileName, file);
 
                         if (error) {
-                            alert("Error uploading damage photo (" + file.name + "): " + error.message);
-                            console.error("Storage Upload Error:", error);
+                            alert("Error uploading damage photo: " + error.message);
                             return;
                         }
 
@@ -282,7 +257,7 @@
                     }
                 }
 
-                // 2. New Parts Photos 'job-images' බකට් එකට අප්ලෝඩ් කිරීම (උපරිම 5ක්)
+                // 2. New Parts Photos Upload
                 if (newPartsInput.files.length > 0) {
                     const files = Array.from(newPartsInput.files).slice(0, 5);
                     for (let file of files) {
@@ -294,8 +269,7 @@
                             .upload(fileName, file);
 
                         if (error) {
-                            alert("Error uploading new parts photo (" + file.name + "): " + error.message);
-                            console.error("Storage Upload Error:", error);
+                            alert("Error uploading new parts photo: " + error.message);
                             return;
                         }
 
@@ -308,7 +282,6 @@
                     }
                 }
 
-                // 3. Database එකට ඩේටා සහ ෆොටෝ ලින්ක්ස් (JSON format) අප්ඩේට් කිරීම
                 let updateData = {
                     repair_charges: parseFloat(chargesInput),
                     description: descInput
@@ -321,25 +294,28 @@
                     updateData.new_images = JSON.stringify(newImageUrls);
                 }
 
+                // Database එකට සේව් කිරීම
                 const { error } = await supabaseClient
                     .from('jobs')
                     .update(updateData)
                     .eq('id', jobId);
 
                 if (error) {
-                    alert("Error saving estimate to database: " + error.message);
+                    alert("Error saving estimate: " + error.message);
                 } else {
-                    alert("Estimate and photos saved successfully! Redirecting to WhatsApp...");
+                    alert("Estimate and photos saved successfully! Opening WhatsApp...");
 
                     let cleanPhone = customerPhone.replace(/^0/, '');
                     
+                    // කස්ටමර්ට යන ලින්ක් එක (customer.html මඟින් ෆොටෝස් සහ බටන් පෙන්නයි)
                     let baseUrl = "https://roshan-pradeep.github.io/meta_electronics/customer.html";
-                    let linkWithParams = `${baseUrl}?id=${jobId}&action=admin`;
+                    let linkWithParams = `${baseUrl}?id=${jobId}`;
 
                     let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: ${linkWithParams}`;
                     
                     let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
                     
+                    // WhatsApp චැට් එක විවෘත කිරීම
                     window.open(whatsappUrl, '_blank');
                     window.location.reload();
                 }
