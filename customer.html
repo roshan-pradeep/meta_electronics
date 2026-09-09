@@ -3,185 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta Electronics - Customer Estimate & Status</title>
-    <!-- CSS ස්ටයිල් ෆයිල් එක සම්බන්ධ කිරීම -->
+    <title>Meta Electronics - Customer Estimate & Approval</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Supabase JavaScript Library එක CDN එක හරහා ඇතුළත් කිරීම -->
+    <!-- Supabase JavaScript Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-    <div class="container" style="max-width: 600px; text-align: center;">
-        <!-- Heading එක ජොබ් එක රෙජිස්ටර් කළාද නැත්නම් ඇස්ටිමේට් එකක්ද යන්න අනුව වෙනස් වේ -->
-        <h2 id="page-heading">Job Estimate & Status</h2>
-        <div id="job-details-container" style="text-align: left; margin-top: 20px;">
-            <p style="text-align: center; color: #666;">Loading job details...</p>
+    <div class="container" style="max-width: 600px; margin-top: 30px;">
+        <h2 style="text-align: center; color: #333;">Meta Electronics - Repair Estimate</h2>
+        
+        <div id="loading-box" style="text-align: center; padding: 20px; font-weight: bold; color: #666;">
+            Loading job details...
+        </div>
+
+        <!-- ප්‍රධාන විස්තර පෙන්වන කාඩ් එක -->
+        <div id="job-details-card" style="display: none; background: #f9f9f9; border: 1px solid #ddd; padding: 20px; border-radius: 8px;">
+            <p><strong>Item:</strong> <span id="job-item"></span></p>
+            <p><strong>Model:</strong> <span id="job-model"></span></p>
+            <p><strong>Serial Number:</strong> <span id="job-serial"></span></p>
+            <p><strong>Reported Fault:</strong> <span id="job-fault"></span></p>
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 15px 0;">
+            
+            <p><strong>Estimated Cost:</strong> <span id="job-charges" style="color: #d9534f; font-size: 18px; font-weight: bold;"></span></p>
+            <p><strong>Repair Description / Parts Needed:</strong></p>
+            <p id="job-desc" style="background: #fff; padding: 10px; border: 1px solid #ccc; border-radius: 4px;"></p>
+
+            <!-- Damage Photos Section -->
+            <div id="damage-section" style="margin-top: 15px; display: none;">
+                <p style="font-weight: bold; color: #d9534f;">Damage Parts Photos:</p>
+                <div id="damage-gallery" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
+
+            <!-- New Parts Photos Section -->
+            <div id="new-section" style="margin-top: 15px; display: none;">
+                <p style="font-weight: bold; color: #0275d8;">New Parts Photos:</p>
+                <div id="new-gallery" style="display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            </div>
+
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+
+            <!-- ස්ටේටස් එක පෙන්වන තැන -->
+            <div id="status-display-box" style="text-align: center; margin-bottom: 15px; font-weight: bold; font-size: 16px;"></div>
+
+            <!-- Approve සහ Non-Approved බොත්තම් -->
+            <div id="action-buttons-container" style="display: flex; gap: 10px;">
+                <button onclick="updateJobStatus('Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">✅ Approve Estimate</button>
+                <button onclick="updateJobStatus('Non-Approved')" style="flex: 1; background: #dc3545; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">❌ Reject / Non-Approved</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Supabase සම්බන්ධ වීමට අවශ්‍ය Credentials
         const SUPABASE_URL = 'https://udqlwyxltmysaocynlhi.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lW_lADCtcwpb-fxnmG-g7w_gWHhGA2M';
-        
-        // WhatsApp ඉන්-ඇප් බ්‍රව්සර්වල localStorage බ්ලොක් වීම වැළැක්වීමට persistSession: false යොදා ඇත.
-        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: false,
-                autoRefreshToken: false,
-                detectSessionInUrl: false
-            }
-        });
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        const container = document.getElementById('job-details-container');
-        const headingElement = document.getElementById('page-heading');
-        
+        // URL එකේ ඇති job id එක ලබා ගැනීම (උදා: customer.html?id=xxxx)
         const urlParams = new URLSearchParams(window.location.search);
         const jobId = urlParams.get('id');
-        const actionType = urlParams.get('action'); // action එක පරීක්ෂා කිරීම සඳහා
-        
-        // පිටුව ලෝඩ් වූ වහාම URL එක පරීක්ෂා කර Heading එක වෙනස් කිරීම සහ ජොබ් විස්තර ලබා ගැනීම
-        window.addEventListener('DOMContentLoaded', async () => {
-            if (actionType === 'register') {
-                headingElement.textContent = "Register Job Details";
-            } else {
-                headingElement.textContent = "Job Estimate & Status";
-            }
 
+        window.addEventListener('DOMContentLoaded', async () => {
             if (!jobId) {
-                container.innerHTML = `<p style="color: red; text-align: center;">Invalid link or Job ID not found!</p>`;
+                document.getElementById('loading-box').innerHTML = `<p style="color: red;">Invalid Job Link!</p>`;
                 return;
             }
-            await fetchSpecificJob(jobId);
+            await fetchJobDetails();
         });
 
-        // ඩේටාබේස් එකෙන් අදාළ ජොබ් එක ලබා ගැනීම (කැෂින් වීම වැළැක්වීමට නවතම දත්ත ලබා ගනී)
-        async function fetchSpecificJob(id) {
+        async function fetchJobDetails() {
             const { data: job, error } = await supabaseClient
                 .from('jobs')
                 .select('*')
-                .eq('id', id)
+                .eq('id', jobId)
                 .single();
 
             if (error || !job) {
-                container.innerHTML = `<p style="color: red; text-align: center;">Job details not found or invalid link!</p>`;
+                document.getElementById('loading-box').innerHTML = `<p style="color: red;">Job not found or error loading details.</p>`;
                 return;
             }
 
-            let statusColor = 'orange';
-            if (job.status === 'Approved') statusColor = 'blue';
-            else if (job.status === 'Non-Approved') statusColor = 'red';
-            else if (job.status === 'Finished') statusColor = 'green';
+            document.getElementById('loading-box').style.display = 'none';
+            document.getElementById('job-details-card').style.display = 'block';
 
-            // ඩේටාබේස් එකෙන් එන JSON string හෝ Array එක නැවත නිවැරදිව ලබා ගැනීම
-            let damageImgs = [];
-            let newImgs = [];
-            try {
-                damageImgs = job.damage_images ? (typeof job.damage_images === 'string' ? JSON.parse(job.damage_images) : job.damage_images) : [];
-                newImgs = job.new_images ? (typeof job.new_images === 'string' ? JSON.parse(job.new_images) : job.new_images) : [];
-            } catch (e) {
-                console.error("Image parse error", e);
+            // දත්ත HTML එකට ඇතුළත් කිරීම
+            document.getElementById('job-item').textContent = job.item || '';
+            document.getElementById('job-model').textContent = job.model || '';
+            document.getElementById('job-serial').textContent = job.serial_number || '';
+            document.getElementById('job-fault').textContent = job.fault || '';
+            document.getElementById('job-charges').textContent = `Rs. ${job.repair_charges || 0}`;
+            document.getElementById('job-desc').textContent = job.description || 'No description provided.';
+
+            // දැනටමත් Approve හෝ Non-Approved කර ඇත්නම් බටන් වෙනුවට ස්ටේටස් එක පෙන්වීම
+            const actionContainer = document.getElementById('action-buttons-container');
+            const statusDisplay = document.getElementById('status-display-box');
+
+            if (job.status === 'Approved' || job.status === 'Non-Approved' || job.status === 'Finished') {
+                actionContainer.style.display = 'none';
+                statusDisplay.innerHTML = `Current Status: <span style="color: ${job.status === 'Approved' ? 'green' : 'red'};">${job.status}</span>`;
+            } else {
+                statusDisplay.style.display = 'none';
             }
 
-            // Damage Parts පින්තූර පෙන්වීම සඳහා HTML කොටස
-            let damageHTML = damageImgs.length > 0 ? `
-                <div style="margin-top: 15px;">
-                    <p style="font-weight: bold; margin-bottom: 5px; color: #333;">Damage Parts Photos:</p>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        ${damageImgs.map(url => `<a href="${url}" target="_blank"><img src="${url}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;"></a>`).join('')}
-                    </div>
-                </div>` : '';
-
-            // New Parts පින්තූර පෙන්වීම සඳහා HTML කොටස
-            let newHTML = newImgs.length > 0 ? `
-                <div style="margin-top: 15px;">
-                    <p style="font-weight: bold; margin-bottom: 5px; color: #333;">New Parts Photos:</p>
-                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                        ${newImgs.map(url => `<a href="${url}" target="_blank"><img src="${url}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;"></a>`).join('')}
-                    </div>
-                </div>` : '';
-
-            container.innerHTML = '';
-            const jobCard = document.createElement('div');
-            jobCard.style.cssText = "background: #f9f9f9; border: 1.5px solid #ddd; padding: 20px; border-radius: 8px;";
-            
-            let actionButtonsHTML = '';
-            
-            // 1. action=register නම් කිසිම විටක බටන් පෙන්වන්නේ නැත.
-            // 2. ජොබ් එකේ ස්ටේටස් එක හරියටම 'Pending' නම් පමණක් Approve / Non-Approved බටන් පෙන්වයි.
-            // 3. වෙනත් ස්ටේටස් එකක් නම් දැනටමත් ප්‍රතිචාර දක්වා ඇති බව පෙන්වයි.
-            if (actionType !== 'register') {
-                if (job.status && job.status.trim().toLowerCase() === 'pending') {
-                    actionButtonsHTML = `
-                        <div id="action-buttons-wrapper" style="margin-top: 20px; display: flex; gap: 10px;">
-                            <button onclick="updateJobStatus('${job.id}', 'Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Approve</button>
-                            <button onclick="updateJobStatus('${job.id}', 'Non-Approved')" style="flex: 1; background: #dc3545; color: white; border: none; padding: 12px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 15px;">Non-Approved</button>
-                        </div>
-                    `;
-                } else {
-                    actionButtonsHTML = `
-                        <div id="action-buttons-wrapper" style="margin-top: 20px; background: #e9ecef; padding: 12px; border-radius: 4px; text-align: center;">
-                            <p style="margin: 0; color: #495057; font-size: 14px; font-weight: bold;">✓ You have already responded to this estimate (${job.status}).</p>
-                        </div>
-                    `;
+            // Damage Photos පෙන්වීම
+            if (job.damage_images) {
+                try {
+                    let damageUrls = JSON.parse(job.damage_images);
+                    if (damageUrls.length > 0) {
+                        document.getElementById('damage-section').style.display = 'block';
+                        const gallery = document.getElementById('damage-gallery');
+                        gallery.innerHTML = '';
+                        damageUrls.forEach(url => {
+                            gallery.innerHTML += `<a href="${url}" target="_blank"><img src="${url}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;"></a>`;
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error parsing damage images:", e);
                 }
             }
 
-            jobCard.innerHTML = `
-                <p><strong>Item:</strong> ${job.item} (${job.model})</p>
-                <p><strong>Serial Number:</strong> ${job.serial_number}</p>
-                <p><strong>Fault:</strong> ${job.fault}</p>
-                <p><strong>Status:</strong> <span id="status-text" style="color: ${statusColor}; font-weight: bold;">${job.status}</span></p>
-                <p><strong>Advance Amount:</strong> Rs. ${job.advance_amount || 0}</p>
-                ${job.repair_charges ? `<p><strong>Estimated Cost:</strong> Rs. ${job.repair_charges}</p>` : ''}
-                ${job.description ? `<p><strong>Repair Description:</strong> ${job.description}</p>` : ''}
-                
-                <!-- ඩිමේජ් සහ අලුත් කොටස්වල පින්තූර පෙන්වන කොටස් මෙහි ඇතුළත් වේ -->
-                ${damageHTML}
-                ${newHTML}
-
-                <p style="font-size: 12px; color: #777; margin-top: 15px;">Date: ${new Date(job.created_at).toLocaleString()}</p>
-                
-                <div id="btn-container">
-                    ${actionButtonsHTML}
-                </div>
-            `;
-            container.appendChild(jobCard);
+            // New Parts Photos පෙන්වීම
+            if (job.new_images) {
+                try {
+                    let newUrls = JSON.parse(job.new_images);
+                    if (newUrls.length > 0) {
+                        document.getElementById('new-section').style.display = 'block';
+                        const gallery = document.getElementById('new-gallery');
+                        gallery.innerHTML = '';
+                        newUrls.forEach(url => {
+                            gallery.innerHTML += `<a href="${url}" target="_blank"><img src="${url}" style="width: 80px; height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;"></a>`;
+                        });
+                    }
+                } catch (e) {
+                    console.error("Error parsing new images:", e);
+                }
+            }
         }
 
-        // පාරිභෝගිකයා Approve හෝ Non-Approved කළ විට ඩේටාබේස් එක අප්ඩේට් කිරීම
-        async function updateJobStatus(id, newStatus) {
-            console.log("Updating job:", id, "to status:", newStatus);
+        // කස්ටමර් Approve හෝ Non-Approved දුන් විට ඩේටාබේස් එක අප්ඩේට් කිරීම
+        async function updateJobStatus(newStatus) {
+            if (!confirm(`Are you sure you want to set status as "${newStatus}"?`)) return;
 
-            const { data, error } = await supabaseClient
+            const { error } = await supabaseClient
                 .from('jobs')
                 .update({ status: newStatus })
-                .eq('id', id)
-                .select();
+                .eq('id', jobId);
 
             if (error) {
-                console.error("Supabase Error:", error);
-                alert("Error updating status: " + error.message);
+                alert("Error updating status: "  + error.message);
             } else {
-                console.log("Update success:", data);
-                alert(`Job status updated to ${newStatus} successfully!`);
-                
-                // බටන් වෙනුවට වහාම කස්ටමර් තෝරාගත් තීරණය පෙන්වීම
-                const btnContainer = document.getElementById('btn-container');
-                if (btnContainer) {
-                    btnContainer.innerHTML = `
-                        <div style="margin-top: 20px; background: #e9ecef; padding: 12px; border-radius: 4px; text-align: center;">
-                            <p style="margin: 0; color: #495057; font-size: 14px; font-weight: bold;">✓ You have already responded to this estimate (${newStatus}).</p>
-                        </div>
-                    `;
-                }
-
-                // ස්ටේටස් පාඨය වර්ණය සහ නම වෙනස් කිරීම
-                const statusSpan = document.getElementById('status-text');
-                if (statusSpan) {
-                    statusSpan.textContent = newStatus;
-                    statusSpan.style.color = newStatus === 'Approved' ? 'blue' : 'red';
-                }
+                alert(`Successfully updated status to ${newStatus}! Thank you.`);
+                window.location.reload();
             }
         }
     </script>
