@@ -43,11 +43,11 @@
 
             <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
 
-            <!-- ස්ටේටස් එක පෙන්වන තැන -->
+            <!-- ස්ටේටස් එක හෝ දැනුම්දීම් පෙන්වන තැන -->
             <div id="status-display-box" style="text-align: center; margin-bottom: 15px; font-weight: bold; font-size: 16px;"></div>
 
-            <!-- Approve සහ Non-Approved බොත්තම් -->
-            <div id="action-buttons-container" style="display: flex; gap: 10px;">
+            <!-- Approve සහ Non-Approved බොත්තම් (මුල් අවස්ථාවේදී හෝ ඇස්තමේන්තු නැති නම් නොපෙන්වයි) -->
+            <div id="action-buttons-container" style="display: none; gap: 10px;">
                 <button onclick="updateJobStatus('Approved')" style="flex: 1; background: #28a745; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">✅ Approve Estimate</button>
                 <button onclick="updateJobStatus('Non-Approved')" style="flex: 1; background: #dc3545; color: white; border: none; padding: 12px; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer;">❌ Reject / Non-Approved</button>
             </div>
@@ -94,14 +94,26 @@
             document.getElementById('job-charges').textContent = `Rs. ${job.repair_charges || 0}`;
             document.getElementById('job-desc').textContent = job.description || 'No description provided.';
 
-            // දැනටමත් Approve හෝ Non-Approved කර ඇත්නම් බටන් වෙනුවට ස්ටේටස් එක පෙන්වීම
             const actionContainer = document.getElementById('action-buttons-container');
             const statusDisplay = document.getElementById('status-display-box');
 
-            if (job.status === 'Approved' || job.status === 'Non-Approved' || job.status === 'Finished') {
+            // 1. ජොබ් එක අලුතින් දමා ඇත, තවම ඇස්තමේන්තුවක් (charges) දාලා නැත්නම්
+            if (job.status === 'Pending' && (!job.repair_charges || job.repair_charges == 0)) {
+                actionContainer.style.display = 'none'; // බටන් සඟවයි
+                statusDisplay.innerHTML = `
+                    <div style="background: #fff3cd; color: #856404; padding: 15px; border: 1px solid #ffeeba; border-radius: 6px; text-align: center; font-weight: bold;">
+                        ⏳ Your item is registered and currently pending for estimate. Please wait until we send you the estimate details!
+                    </div>
+                `;
+            } 
+            // 2. කස්ටමර් දැනටමත් Approve හෝ Reject කර ඇත්නම් හෝ ජොබ් එක ඉවර කර ඇත්නම්
+            else if (job.status === 'Approved' || job.status === 'Non-Approved' || job.status === 'Finished') {
                 actionContainer.style.display = 'none';
                 statusDisplay.innerHTML = `Current Status: <span style="color: ${job.status === 'Approved' ? 'green' : 'red'};">${job.status}</span>`;
-            } else {
+            } 
+            // 3. ඩෑෂ්බෝඩ් එකෙන් Estimate එක දාලා WhatsApp එකෙන් ලින්ක් එක එව්වම (Pending වුණත් charges තියෙනවා නම්)
+            else {
+                actionContainer.style.display = 'flex'; // බටන් පෙන්වයි
                 statusDisplay.style.display = 'none';
             }
 
@@ -150,7 +162,7 @@
                 .eq('id', jobId);
 
             if (error) {
-                alert("Error updating status: "  + error.message);
+                alert("Error updating status: " + error.message);
             } else {
                 alert(`Successfully updated status to ${newStatus}! Thank you.`);
                 window.location.reload();
