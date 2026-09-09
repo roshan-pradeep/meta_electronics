@@ -55,7 +55,7 @@
             await fetchSpecificJob(jobId);
         });
 
-        // ඩේටාබේස් එකෙන් අදාළ ජොබ් එක ලබා ගැනීම (কැෂින් වීම වැළැක්වීමට නවතම දත්ත ලබා ගනී)
+        // ඩේටාබේස් එකෙන් අදාළ ජොබ් එක ලබා ගැනීම (කැෂින් වීම වැළැක්වීමට නවතම දත්ත ලබා ගනී)
         async function fetchSpecificJob(id) {
             const { data: job, error } = await supabaseClient
                 .from('jobs')
@@ -73,16 +73,43 @@
             else if (job.status === 'Non-Approved') statusColor = 'red';
             else if (job.status === 'Finished') statusColor = 'green';
 
+            // ඩේටාබේස් එකෙන් එන JSON string හෝ Array එක නැවත නිවැරදිව ලබා ගැනීම
+            let damageImgs = [];
+            let newImgs = [];
+            try {
+                damageImgs = job.damage_images ? (typeof job.damage_images === 'string' ? JSON.parse(job.damage_images) : job.damage_images) : [];
+                newImgs = job.new_images ? (typeof job.new_images === 'string' ? JSON.parse(job.new_images) : job.new_images) : [];
+            } catch (e) {
+                console.error("Image parse error", e);
+            }
+
+            // Damage Parts පින්තූර පෙන්වීම සඳහා HTML කොටස
+            let damageHTML = damageImgs.length > 0 ? `
+                <div style="margin-top: 15px;">
+                    <p style="font-weight: bold; margin-bottom: 5px; color: #333;">Damage Parts Photos:</p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${damageImgs.map(url => `<a href="${url}" target="_blank"><img src="${url}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;"></a>`).join('')}
+                    </div>
+                </div>` : '';
+
+            // New Parts පින්තූර පෙන්වීම සඳහා HTML කොටස
+            let newHTML = newImgs.length > 0 ? `
+                <div style="margin-top: 15px;">
+                    <p style="font-weight: bold; margin-bottom: 5px; color: #333;">New Parts Photos:</p>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        ${newImgs.map(url => `<a href="${url}" target="_blank"><img src="${url}" style="width: 70px; height: 70px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc;"></a>`).join('')}
+                    </div>
+                </div>` : '';
+
             container.innerHTML = '';
             const jobCard = document.createElement('div');
             jobCard.style.cssText = "background: #f9f9f9; border: 1.5px solid #ddd; padding: 20px; border-radius: 8px;";
             
             let actionButtonsHTML = '';
             
-            // **ප්‍රධාන නිවැරදි කිරීම:** 
             // 1. action=register නම් කිසිම විටක බටන් පෙන්වන්නේ නැත.
-            // 2. ජොබ් එකේ ස්ටේටස් එක හරියටම 'Pending' නම් පමණක් (සැකයකින් තොරව) Approve / Non-Approved බටන් පෙන්වයි.
-            // 3. ස්ටේටස් එක 'Pending' නොවේ නම් (දැනටමත් Approve හෝ Non-Approved වී ඇත්නම්), කිසිම අවස්ථාවක බටන් නොපෙන්වා, කස්ටමර් කලින් දුන් තීරණය පෙන්වන පණිවිඩය පමණක් පෙන්වයි.
+            // 2. ජොබ් එකේ ස්ටේටස් එක හරියටම 'Pending' නම් පමණක් Approve / Non-Approved බටන් පෙන්වයි.
+            // 3. වෙනත් ස්ටේටස් එකක් නම් දැනටමත් ප්‍රතිචාර දක්වා ඇති බව පෙන්වයි.
             if (actionType !== 'register') {
                 if (job.status && job.status.trim().toLowerCase() === 'pending') {
                     actionButtonsHTML = `
@@ -108,7 +135,12 @@
                 <p><strong>Advance Amount:</strong> Rs. ${job.advance_amount || 0}</p>
                 ${job.repair_charges ? `<p><strong>Estimated Cost:</strong> Rs. ${job.repair_charges}</p>` : ''}
                 ${job.description ? `<p><strong>Repair Description:</strong> ${job.description}</p>` : ''}
-                <p style="font-size: 12px; color: #777;">Date: ${new Date(job.created_at).toLocaleString()}</p>
+                
+                <!-- ඩිමේජ් සහ අලුත් කොටස්වල පින්තූර පෙන්වන කොටස් මෙහි ඇතුළත් වේ -->
+                ${damageHTML}
+                ${newHTML}
+
+                <p style="font-size: 12px; color: #777; margin-top: 15px;">Date: ${new Date(job.created_at).toLocaleString()}</p>
                 
                 <div id="btn-container">
                     ${actionButtonsHTML}
