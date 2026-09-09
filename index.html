@@ -111,23 +111,9 @@
                     <input type="text" id="fault" placeholder="Ex: No power, Display issue" required>
                 </div>
                 <!-- පාරිභෝගිකයාගේ දුරකථන අංකය -->
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 20px;">
                     <label for="customer_phone">Customer Phone Number (පාරිභෝගිකයාගේ අංකය)</label>
                     <input type="text" id="customer_phone" placeholder="Ex: 0711462838" required>
-                </div>
-
-                <!-- ඩිමේජ් වුණු කොටස්වල පින්තූර තෝරා ගැනීමට (උපරිම 5ක්) -->
-                <div class="form-group" style="margin-top: 15px;">
-                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">Damage Parts Photos (Max 5):</label>
-                    <input type="file" id="damage-photos" accept="image/*" multiple style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    <small style="color: #666;">You can select up to 5 images.</small>
-                </div>
-
-                <!-- අලුතින් දමන කොටස්වල පින්තූර තෝරා ගැනීමට (උපරිම 5ක්) -->
-                <div class="form-group" style="margin-top: 15px; margin-bottom: 20px;">
-                    <label style="font-weight: bold; display: block; margin-bottom: 5px;">New Parts Photos (Max 5):</label>
-                    <input type="file" id="new-photos" accept="image/*" multiple style="width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
-                    <small style="color: #666;">You can select up to 5 images.</small>
                 </div>
 
                 <!-- ජොබ් එක රෙজিস্টර් කිරීමේ බොත්තම -->
@@ -213,63 +199,21 @@
             document.getElementById(sectionId).classList.remove('hidden');
         }
 
-        // අලුත් Job එකක් Register Form එක Submit කළ විට ක්‍රියාත්මක වීම (පින්තූර අප්ලෝඩ් කිරීම සමඟ)
+        // අලුත් Job එකක් Register Form එක Submit කළ විට ක්‍රියාත්මක වීම
         addJobForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            jobMsg.textContent = 'Processing & Uploading images... Please wait.';
+            jobMsg.textContent = 'Processing... Please wait.';
             jobMsg.style.color = 'blue';
 
+            // පෝරමයෙන් දත්ත ලබා ගැනීම
             const item = document.getElementById('item').value;
             const model = document.getElementById('model').value;
             const serialNumber = document.getElementById('serial_number').value;
             const fault = document.getElementById('fault').value;
             const customerPhone = document.getElementById('customer_phone').value.trim();
 
-            const damageInput = document.getElementById('damage-photos');
-            const newPartsInput = document.getElementById('new-photos');
-            
-            let damageImageUrls = [];
-            let newImageUrls = [];
-            const tempJobId = 'job_' + Date.now(); // පින්තූර ෆයිල් නේම් එක සෑදීමට තාවකාලික හැඳින්වීමක්
-
             try {
-                // 1. Damage Photos අප්ලෝඩ් කිරීම (උපරිම 5ක් පමණක්)
-                if (damageInput.files.length > 0) {
-                    const files = Array.from(damageInput.files).slice(0, 5);
-                    for (let file of files) {
-                        const fileName = `damage_${tempJobId}_${Date.now()}_${file.name}`;
-                        const { data, error } = await supabaseClient.storage
-                            .from('job-images')
-                            .upload(fileName, file);
-                        
-                        if (!error) {
-                            const { data: publicUrlData } = supabaseClient.storage
-                                .from('job-images')
-                                .getPublicUrl(fileName);
-                            damageImageUrls.push(publicUrlData.publicUrl);
-                        }
-                    }
-                }
-
-                // 2. New Parts Photos අප්ලෝඩ් කිරීම (උපරිම 5ක් පමණක්)
-                if (newPartsInput.files.length > 0) {
-                    const files = Array.from(newPartsInput.files).slice(0, 5);
-                    for (let file of files) {
-                        const fileName = `new_${tempJobId}_${Date.now()}_${file.name}`;
-                        const { data, error } = await supabaseClient.storage
-                            .from('job-images')
-                            .upload(fileName, file);
-                        
-                        if (!error) {
-                            const { data: publicUrlData } = supabaseClient.storage
-                                .from('job-images')
-                                .getPublicUrl(fileName);
-                            newImageUrls.push(publicUrlData.publicUrl);
-                        }
-                    }
-                }
-
-                // 3. jobs ටේබල් එකට දත්ත සහ පින්තූරවල ලින්ක්ස් ඇතුළත් කිරීම
+                // jobs ටේබල් එකට දත්ත ඇතුළත් කිරීම
                 const { data, error } = await supabaseClient
                     .from('jobs')
                     .insert([
@@ -279,9 +223,7 @@
                             serial_number: serialNumber, 
                             fault: fault, 
                             customer_phone: customerPhone, 
-                            status: 'Pending',
-                            damage_images: JSON.stringify(damageImageUrls),
-                            new_images: JSON.stringify(newImageUrls)
+                            status: 'Pending'
                         }
                     ])
                     .select(); 
@@ -292,7 +234,7 @@
                     console.error(error);
                 } else {
                     jobMsg.style.color = 'green';
-                    jobMsg.textContent = "Job Registered Successfully with Photos!";
+                    jobMsg.textContent = "Job Registered Successfully!";
                     addJobForm.reset(); 
 
                     const insertedJob = data[0];
@@ -308,7 +250,7 @@
             } catch (err) {
                 console.error(err);
                 jobMsg.style.color = 'red';
-                jobMsg.textContent = "Error uploading images. Please try again.";
+                jobMsg.textContent = "Error occurred. Please try again.";
             }
         });
 

@@ -104,7 +104,7 @@
             });
         }
 
-        // තෝරාගත් ජොබ්ස් ලැයිස්තුව ස්ක්‍රීන් එකේ පෙන්වන ෆන්ක්ෂන් එක
+        // තෝරාගත් ජොබ්ස් ලැයිස්තුව ස්ක්‍රීන් එකේ පෙන්වන ෆන්ක්ෂන් එක (ෆොටෝ අප්ලෝඩ් සහ ප්‍රිවීව් කොටු සමඟ)
         function displayJobs(jobs) {
             if (jobs.length === 0) {
                 pendingJobsContainer.innerHTML = `<p style="text-align: center; color: #666;">No jobs match this filter.</p>`;
@@ -148,12 +148,51 @@
                             <textarea id="desc-${job.id}" placeholder="Enter repair details or needed parts" style="width: 100%; padding: 8px; box-sizing: border-box; height: 60px;"></textarea>
                         </div>
 
+                        <!-- 1. Damage Parts Photos (උපරිම 5ක් තෝරා ගැනීමට සහ ප්‍රිවීව් පෙන්නීමට) -->
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #d9534f;">Damage Parts Photos (Max 5):</label>
+                            <input type="file" id="damage-photos-${job.id}" accept="image/*" multiple onchange="previewImages(this, 'damage-preview-${job.id}')" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #fff;">
+                            <small style="color: #666;">Select up to 5 images from phone/PC gallery.</small>
+                            <!-- පින්තූර තෝරාගත් පසු කුඩා කොටු (Thumbnails) පෙන්වන ග්‍රිඩ් එක -->
+                            <div id="damage-preview-${job.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
+                        </div>
+
+                        <!-- 2. New Parts Photos (උපරිම 5ක් තෝරා ගැනීමට සහ ප්‍රිවීව් පෙන්නීමට) -->
+                        <div class="form-group" style="margin-bottom: 15px;">
+                            <label style="display: block; font-weight: bold; margin-bottom: 5px; color: #0275d8;">New Parts Photos (Max 5):</label>
+                            <input type="file" id="new-photos-${job.id}" accept="image/*" multiple onchange="previewImages(this, 'new-preview-${job.id}')" style="width: 100%; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: #fff;">
+                            <small style="color: #666;">Select up to 5 images from phone/PC gallery.</small>
+                            <!-- පින්තූර තෝරාගත් පසු කුඩා කොටු (Thumbnails) පෙන්වන ග්‍රිඩ් එක -->
+                            <div id="new-preview-${job.id}" style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;"></div>
+                        </div>
+
                         <!-- ඇස්තමේන්තුව යැවීමේ බොත්තම -->
                         <button onclick="sendEstimate('${job.id}', '${job.customer_phone}', '${job.item}', '${job.model}')" class="btn" style="background-color: #ffc107; color: #000; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">Estimate Send to Customer</button>
                     </div>
                 `;
                 pendingJobsContainer.appendChild(jobCard);
             });
+        }
+
+        // ෆොටෝස් තෝරාගත් වහාම ඒවගේ පොඩි ප්‍රිවීව් (Thumbnail) කොටු ස්ක්‍රීන් එකේ පෙන්වන ෆන්ක්ෂන් එක
+        function previewImages(input, previewContainerId) {
+            const previewContainer = document.getElementById(previewContainerId);
+            previewContainer.innerHTML = ''; // කලින් තිබූ ප්‍රිවීව් මකා දැමීම
+
+            if (input.files) {
+                const files = Array.from(input.files).slice(0, 5); // උපරිම 5 කට සීමා කිරීම
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        // කුඩා කොටු (Thumbnail)වල ස්ටයිල් එක
+                        img.style.cssText = "width: 60px; height: 60px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd;";
+                        previewContainer.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
         }
 
         // පාරිභෝගිකයාගේ අංකය ක්ලික් කළ විට ඔහුගේ සියලුම ජොබ්ස් මෝඩාල් එකක පෙන්වීම
@@ -200,42 +239,98 @@
             document.getElementById('customer-jobs-modal').style.display = 'none';
         }
 
-        // ඇස්තමේන්තු මිල සේවයට යොමු කර WhatsApp හරහා කස්ටමර්ට ලින්ක් එක යැවීම
+        // ඇස්තමේන්තු මිල සහ ෆොටෝස් අප්ලෝඩ් කර WhatsApp හරහා කස්ටමර්ට ලින්ක් එක යැවීම
         async function sendEstimate(jobId, customerPhone, item, model) {
             const chargesInput = document.getElementById(`charges-${jobId}`).value;
             const descInput = document.getElementById(`desc-${jobId}`).value;
+            const damageInput = document.getElementById(`damage-photos-${jobId}`);
+            const newPartsInput = document.getElementById(`new-photos-${jobId}`);
 
             if (!chargesInput) {
                 alert("Please enter estimated charges!");
                 return;
             }
 
-            // දත්ත බේස් එකට ඇස්තමේන්තු ගාස්තු සහ විස්තරය අප්ඩේට් කිරීම
-            const { error } = await supabaseClient
-                .from('jobs')
-                .update({
+            let damageImageUrls = [];
+            let newImageUrls = [];
+            const tempJobId = 'job_' + jobId + '_' + Date.now();
+
+            try {
+                // 1. Damage Photos 'job-images' බකට් එකට අප්ලෝඩ් කිරීම (උපරිම 5ක්)
+                if (damageInput.files.length > 0) {
+                    const files = Array.from(damageInput.files).slice(0, 5);
+                    for (let file of files) {
+                        const fileName = `damage_${tempJobId}_${Date.now()}_${file.name}`;
+                        const { data, error } = await supabaseClient.storage
+                            .from('job-images')
+                            .upload(fileName, file);
+
+                        if (!error) {
+                            const { data: publicUrlData } = supabaseClient.storage
+                                .from('job-images')
+                                .getPublicUrl(fileName);
+                            damageImageUrls.push(publicUrlData.publicUrl);
+                        }
+                    }
+                }
+
+                // 2. New Parts Photos 'job-images' බකට් එකට අප්ලෝඩ් කිරීම (උපරිම 5ක්)
+                if (newPartsInput.files.length > 0) {
+                    const files = Array.from(newPartsInput.files).slice(0, 5);
+                    for (let file of files) {
+                        const fileName = `new_${tempJobId}_${Date.now()}_${file.name}`;
+                        const { data, error } = await supabaseClient.storage
+                            .from('job-images')
+                            .upload(fileName, file);
+
+                        if (!error) {
+                            const { data: publicUrlData } = supabaseClient.storage
+                                .from('job-images')
+                                .getPublicUrl(fileName);
+                            newImageUrls.push(publicUrlData.publicUrl);
+                        }
+                    }
+                }
+
+                // 3. Database එකට ඩේටා සහ ෆොටෝ ලින්ක්ස් (JSON format) අප්ඩේට් කිරීම
+                let updateData = {
                     repair_charges: parseFloat(chargesInput),
                     description: descInput
-                })
-                .eq('id', jobId);
+                };
 
-            if (error) {
-                alert("Error saving estimate: " + error.message);
-            } else {
-                alert("Estimate saved successfully! Redirecting to WhatsApp...");
+                if (damageImageUrls.length > 0) {
+                    updateData.damage_images = JSON.stringify(damageImageUrls);
+                }
+                if (newImageUrls.length > 0) {
+                    updateData.new_images = JSON.stringify(newImageUrls);
+                }
 
-                let cleanPhone = customerPhone.replace(/^0/, '');
-                
-                // WhatsApp හරහා ලින්ක් එක කැඩී යාම වැළැක්වීමට URL එක වෙනම සකස් කිරීම
-                let baseUrl = "https://roshan-pradeep.github.io/meta_electronics/customer.html";
-                let linkWithParams = `${baseUrl}?id=${jobId}&action=admin`;
+                const { error } = await supabaseClient
+                    .from('jobs')
+                    .update(updateData)
+                    .eq('id', jobId);
 
-                let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: ${linkWithParams}`;
-                
-                let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
-                
-                window.open(whatsappUrl, '_blank');
-                window.location.reload(); // පේජ් එක රීලෝඩ් කිරීම
+                if (error) {
+                    alert("Error saving estimate: " + error.message);
+                } else {
+                    alert("Estimate and photos saved successfully! Redirecting to WhatsApp...");
+
+                    let cleanPhone = customerPhone.replace(/^0/, '');
+                    
+                    // WhatsApp හරහා ලින්ක් එක කැඩී යාම වැළැක්වීමට URL එක වෙනම සකස් කිරීම
+                    let baseUrl = "https://roshan-pradeep.github.io/meta_electronics/customer.html";
+                    let linkWithParams = `${baseUrl}?id=${jobId}&action=admin`;
+
+                    let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: ${linkWithParams}`;
+                    
+                    let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
+                    
+                    window.open(whatsappUrl, '_blank');
+                    window.location.reload(); // පේජ් එක රීලෝඩ් කිරීම
+                }
+            } catch (err) {
+                console.error(err);
+                alert("An error occurred while uploading images. Please try again.");
             }
         }
     </script>
