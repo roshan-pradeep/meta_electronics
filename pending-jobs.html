@@ -215,7 +215,7 @@
             document.getElementById('customer-jobs-modal').style.display = 'none';
         }
 
-        // මෙන්න බටන් එක ක්ලික් කළම වැඩ කරන ප්‍රධාන ෆන්ක්ෂන් එක (WhatsApp Link එක හදන තැන)
+        // මෙන්න බටන් එක ක්ලික් කළම වැඩ කරන ප්‍රධාන ෆන්ක්ෂන් එක (ෆොටෝස් අප්ලෝඩ් කර, WhatsApp මැසේජ් එක සහ ලින්ක් එක හදන තැන)
         async function sendEstimate(jobId, customerPhone, item, model) {
             const chargesInput = document.getElementById(`charges-${jobId}`).value;
             const descInput = document.getElementById(`desc-${jobId}`).value;
@@ -294,7 +294,7 @@
                     updateData.new_images = JSON.stringify(newImageUrls);
                 }
 
-                // Database එකට සේව් කිරීම
+                // Database එකට ඇස්තමේන්තුව සහ ෆොටෝස් සේව් කිරීම
                 const { error } = await supabaseClient
                     .from('jobs')
                     .update(updateData)
@@ -307,15 +307,31 @@
 
                     let cleanPhone = customerPhone.replace(/^0/, '');
                     
-                    // කස්ටමර්ට යන ලින්ක් එක (customer.html මඟින් ෆොටෝස් සහ බටන් පෙන්නයි)
+                    // බ්‍රව්සර් කැෂ් (Cache) ප්‍රශ්න මඟහරවා ගැනීමට අලුත්ම Timestamp එකක් සහිත Unique Link එකක් සෑදීම
                     let baseUrl = "https://roshan-pradeep.github.io/meta_electronics/customer.html";
-                    let linkWithParams = `${baseUrl}?id=${jobId}`;
+                    let uniqueLink = `${baseUrl}?id=${jobId}&v=${Date.now()}`;
 
-                    let customerMsg = `Hello from Meta Electronics! Here is the repair estimate for your ${item} (${model}).\nEstimated Cost: Rs. ${chargesInput}\nDetails: ${descInput}\n\nPlease check and approve/reject here: ${linkWithParams}`;
+                    // WhatsApp මැසේජ් එක සැකසීම (විස්තර + ෆොටෝස් ලින්ක්ස් + කස්ටමර් ලින්ක් එක)
+                    let customerMsg = `Hello from Meta Electronics! Your repair estimate for ${item} (${model}) is now ready.\n` +
+                                      `Estimated Cost: Rs. ${chargesInput}\n` +
+                                      `Details: ${descInput}\n`;
+
+                    // ඩේටාබේස් එකට අප්ලෝඩ් වූ Damage Photos වල ලින්ක්ස් මැසේජ් එකට එකතු කිරීම
+                    if (damageImageUrls.length > 0) {
+                        customerMsg += `\nDamage Photos:\n` + damageImageUrls.join('\n');
+                    }
+
+                    // ඩේටාබේස් එකට අප්ලෝඩ් වූ New Parts Photos වල ලින්ක්ස් මැසේජ් එකට එකතු කිරීම
+                    if (newImageUrls.length > 0) {
+                        customerMsg += `\n\nNew Parts Photos:\n` + newImageUrls.join('\n');
+                    }
+
+                    // අනුමත කිරීමට සහ ප්‍රතික්ෂේප කිරීමට අවශ්‍ය ලින්ක් එක මැසේජ් එක අවසානයට එකතු කිරීම
+                    customerMsg += `\n\nPlease check and approve/reject here:\n${uniqueLink}`;
                     
                     let whatsappUrl = `https://wa.me/94${cleanPhone}?text=${encodeURIComponent(customerMsg)}`;
                     
-                    // WhatsApp චැට් එක විවෘත කිරීම
+                    // WhatsApp චැට් එක අලුත් ටැබ් එකකින් විවෘත කිරීම සහ පේජ් එක රිෆ්‍රෙෂ් කිරීම
                     window.open(whatsappUrl, '_blank');
                     window.location.reload();
                 }
