@@ -260,12 +260,22 @@
                 if (damageInput.files.length > 0) {
                     const files = Array.from(damageInput.files).slice(0, 5);
                     for (let file of files) {
-                        const fileName = `damage_${tempJobId}_${Date.now()}_${file.name}`;
+                        // ෆයිල් නේම් එකේ ඇති ස්පේස් සහ අනවශ්‍ය අකුරු ඉවත් කිරීම (Bad Request 400 errors මගහරවා ගැනීමට)
+                        const safeFileName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+                        const fileName = `damage_${tempJobId}_${Date.now()}_${safeFileName}`;
+                        
                         const { data, error } = await supabaseClient.storage
                             .from('job-images')
                             .upload(fileName, file);
 
-                        if (!error) {
+                        // Upload Error එකක් ඇත්නම් එය බලා ගැනීමට Error Handling එකක් එකතු කර ඇත
+                        if (error) {
+                            alert("Error uploading damage photo (" + file.name + "): " + error.message);
+                            console.error("Storage Upload Error:", error);
+                            return;
+                        }
+
+                        if (data) {
                             const { data: publicUrlData } = supabaseClient.storage
                                 .from('job-images')
                                 .getPublicUrl(fileName);
@@ -278,12 +288,22 @@
                 if (newPartsInput.files.length > 0) {
                     const files = Array.from(newPartsInput.files).slice(0, 5);
                     for (let file of files) {
-                        const fileName = `new_${tempJobId}_${Date.now()}_${file.name}`;
+                        // ෆයිල් නේම් එකේ ඇති ස්පේස් සහ අනවශ්‍ය අකුරු ඉවත් කිරීම (Bad Request 400 errors මගහරවා ගැනීමට)
+                        const safeFileName = file.name.replace(/[^a-zA-Z0-9_.-]/g, '_');
+                        const fileName = `new_${tempJobId}_${Date.now()}_${safeFileName}`;
+                        
                         const { data, error } = await supabaseClient.storage
                             .from('job-images')
                             .upload(fileName, file);
 
-                        if (!error) {
+                        // Upload Error එකක් ඇත්නම් එය බලා ගැනීමට Error Handling එකක් එකතු කර ඇත
+                        if (error) {
+                            alert("Error uploading new parts photo (" + file.name + "): " + error.message);
+                            console.error("Storage Upload Error:", error);
+                            return;
+                        }
+
+                        if (data) {
                             const { data: publicUrlData } = supabaseClient.storage
                                 .from('job-images')
                                 .getPublicUrl(fileName);
@@ -311,7 +331,7 @@
                     .eq('id', jobId);
 
                 if (error) {
-                    alert("Error saving estimate: " + error.message);
+                    alert("Error saving estimate to database: " + error.message);
                 } else {
                     alert("Estimate and photos saved successfully! Redirecting to WhatsApp...");
 
@@ -329,8 +349,8 @@
                     window.location.reload(); // පේජ් එක රීලෝඩ් කිරීම
                 }
             } catch (err) {
-                console.error(err);
-                alert("An error occurred while uploading images. Please try again.");
+                console.error("Unexpected Error:", err);
+                alert("An unexpected error occurred: " + err.message);
             }
         }
     </script>
