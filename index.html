@@ -240,7 +240,7 @@
                     const insertedJob = data[0];
 
                     // WhatsApp හරහා පාරිභෝගිකයාට ලින්ක් එක යැවීම
-                    let customerMsg = `Hello, your job for ${item} (${model}) has been registered at Meta Electronics. Track status here: https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${insertedJob.id}&action=register`;
+                    let customerMsg = `සුබ දවසක් !  ඔබගේ  ${item} (${model}) භාණ්ඩය අලුත්වැඩියා කිරිම සදහා Meta Electronics අප වෙත ලැබි ඇත . විස්තර දැනගැනීමට මෙම ලින්ක් එක click කරන්න : https://roshan-pradeep.github.io/meta_electronics/customer.html?id=${insertedJob.id}&action=register`;
                     let whatsappUrl = `https://wa.me/94${customerPhone.replace(/^0/, '')}?text=${encodeURIComponent(customerMsg)}`;
                     
                     setTimeout(() => {
